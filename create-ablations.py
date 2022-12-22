@@ -1,6 +1,3 @@
-import shutil
-import random
-import os
 import csv
 
 training_list = 'chest_xray_train.csv'
