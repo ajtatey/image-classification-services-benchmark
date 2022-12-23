@@ -76,10 +76,12 @@ Choose Use a .CSV or .JSONL file (Method 2) and then:
 
 Do the same for the corresponding `val_hg_{ablation}.csv`.
 
+When uploaded, choose 'go to trainings,' select number of model candidates, and then 'start models training.' Once hte models have trained, choose the most accurate one and 'view on model hub' and copy the model name to use as you `inference_endpoint`.
+
 Run:
 
 ```bash
-python3 huggingface.py invoke
+python3 huggingface.py invoke <inference_endpoint>
 ```
 
 This will invoke the model endpoint against each image listed in `chest_xray_test.csv` and give you a running accuracy score, as well as outputting `xray-results-{ablation_size}.csv` which has the format:
