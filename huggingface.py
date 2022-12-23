@@ -25,7 +25,7 @@ def invoke(inference_endpoint):
                 response = requests.request(
                     "POST", API_URL, headers=headers, data=data)
                 print(response.content.decode("utf-8"))
-                results[0].append(cls)
+                results[0].append(row[1])
                 results[1].append(json.loads(
                     response.content.decode("utf-8"))[0]['label'])
                 results[2].append(json.loads(
@@ -52,4 +52,5 @@ if __name__ == '__main__':
     # swicth between prepare() and invoke() depending on the argument
 
     if sys.argv[1] == 'invoke':
-        invoke()
+        inference_endpoint = sys.argv[2]
+        invoke(inference_endpoint)
