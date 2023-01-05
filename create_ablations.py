@@ -9,7 +9,8 @@ google_bucket_name = 'gs://chest-xray'
 # get the class names from the training folder
 CLASSES = os.listdir('train')
 # save the class names to a file
-CLASSES.remove('.DS_Store')
+if ".DS_Store" in CLASSES:
+    CLASSES.remove('.DS_Store')
 with open('classes.txt', 'w') as f:
     f.write(','.join(CLASSES))
 # create a training list from all the files in the training folder
