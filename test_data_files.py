@@ -1,7 +1,31 @@
-
 ablation_sizes = [5, 20, 80, 320, 1280]
 
-class_names = ["PNEUMONIA", "NORMAL"]
+
+def test_ablation_files_correct_size():
+    for ablation_size_index in range(len(ablation_sizes)):
+        with open(f"train_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            ablation_data_train = ablation_file.readlines()
+        assert len(ablation_data_train) == 2 * ablation_sizes[ablation_size_index] * 0.8
+
+        with open(f"val_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            ablation_data_val = ablation_file.readlines()
+        assert len(ablation_data_val) == 2 * ablation_sizes[ablation_size_index] * 0.2
+
+def test_no_split_mixing():
+    with open(f"chest_xray_test.csv") as ablation_file:
+        ablation_data_test = ablation_file.readlines()
+    for ablation_size_index in range(len(ablation_sizes)):
+            with open(f"train_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+                ablation_data_train = ablation_file.readlines()
+            with open(f"val_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+                ablation_data_val = ablation_file.readlines()
+            for entry in ablation_data_train:
+                assert entry not in ablation_data_test
+                assert entry not in ablation_data_val
+
+            for entry in ablation_data_val:
+                assert entry not in ablation_data_test
+                assert entry not in ablation_data_train
 
 def test_ablations_are_cumulative():
     """Checks that larger ablations contain the data used in smaller ablations"""
@@ -20,16 +44,6 @@ def test_ablations_are_balanced():
             ablation_data = ablation_file.readlines()
         pneumonia_sample_count = sum(["PNEUMONIA" in entry for entry in ablation_data])
         assert pneumonia_sample_count * 2 == len(ablation_data), ablation_data
-
-def test_ablation_files_correct_size():
-    for ablation_size_index in range(len(ablation_sizes)):
-        with open(f"train_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
-            ablation_data_train = ablation_file.readlines()
-        assert len(ablation_data_train) == 2 * ablation_sizes[ablation_size_index] * 0.8
-
-        with open(f"val_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
-            ablation_data_val = ablation_file.readlines()
-        assert len(ablation_data_val) == 2 * ablation_sizes[ablation_size_index] * 0.2
 
 def test_nyckel_files():
     for ablation_size_index in range(len(ablation_sizes)):
