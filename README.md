@@ -29,6 +29,10 @@ This generates 37 `.csv` files and 1 `.txt` in this folder:
 
 2 folders are also generated, `training_uploads` and `val_uploads` that contain all the images to be used.
 
+### Verify Ablation Correctness
+
+Generate data-files then run `pytest`
+
 ## Nyckel
 
 Create environment variables for your `client_id` and `client_secret` like so:

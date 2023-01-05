@@ -19,6 +19,7 @@ for cls in CLASSES:
     training_list.extend([file, cls] for file in os.listdir(f'train/{cls}'))
 
 # shuffle the training list
+random.seed(0)
 random.shuffle(training_list)
 # write the training list to a csv
 with open(training_list_filename, 'w') as f:
