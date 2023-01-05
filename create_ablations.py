@@ -9,7 +9,8 @@ google_bucket_name = 'gs://chest-xray'
 # get the class names from the training folder
 CLASSES = os.listdir('train')
 # save the class names to a file
-CLASSES.remove('.DS_Store')
+if ".DS_Store" in CLASSES:
+    CLASSES.remove('.DS_Store')
 with open('classes.txt', 'w') as f:
     f.write(','.join(CLASSES))
 # create a training list from all the files in the training folder
@@ -18,6 +19,7 @@ for cls in CLASSES:
     training_list.extend([file, cls] for file in os.listdir(f'train/{cls}'))
 
 # shuffle the training list
+random.seed(0)
 random.shuffle(training_list)
 # write the training list to a csv
 with open(training_list_filename, 'w') as f:
