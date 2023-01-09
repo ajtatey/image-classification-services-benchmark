@@ -117,7 +117,7 @@ for file_name, file_class in zip(val_list[0], val_list[1]):
 for ablation in ABLATIONS[1:]:
     temp_train_list = [[], []]
     vertex_list = [[], []]
-    hg_list = [['file'], ['label']]
+    hg_train_list = [['file'], ['label']]
     nyckel_train_list = [[], []]
 
     for cls in CLASSES:
@@ -148,7 +148,7 @@ for ablation in ABLATIONS[1:]:
 
     temp_val_list = [[], []]
     vertex_list = [[], []]
-    hg_list = [['file'], ['label']]
+    hg_val_list = [['file'], ['label']]
     for cls in CLASSES:
         ablation_count = 0
         for file_name, file_class in zip(val_list[0], val_list[1]):
