@@ -9,7 +9,7 @@ google_bucket_name = 'gs://argot-xrays'
 azure_training_uploads = 'azureml://training_uploads/'
 azure_val_uploads = 'azureml://val_uploads/'
 
-if not os.path.exists('test/VIRAL'):
+"""if not os.path.exists('test/VIRAL'):
     os.makedirs('test/VIRAL')
 for file in os.listdir('test/PNEUMONIA'):
     if 'virus' in file:
@@ -21,7 +21,7 @@ if not os.path.exists('train/VIRAL'):
 for file in os.listdir('train/PNEUMONIA'):
     if 'virus' in file:
         shutil.move(f'train/PNEUMONIA/{file}', f'train/VIRAL/{file}')
-os.rename('train/PNEUMONIA', 'train/BACTERIA')
+os.rename('train/PNEUMONIA', 'train/BACTERIA')"""
 
 # get the class names from the training folder
 CLASSES = os.listdir('train')
@@ -58,6 +58,8 @@ for cls in CLASSES:
     hg_train_list = [['file'], ['label']]
     hg_val_list = [['file'], ['label']]
     nyckel_train_list = [[], []]
+    aws_train_list = [[], []]
+    aws_val_list = [[], []]
     with open(training_list_filename) as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
@@ -80,6 +82,8 @@ for cls in CLASSES:
         azure_train_list[0].append(
             f'{azure_training_uploads}{file_name}')
         azure_train_list[1].append(file_class)
+    aws_train_list[0].extend(train_list[0])
+    aws_train_list[1].extend(train_list[1])
 
     val_list[0].extend(class_list[0][int(ABLATIONS[0]*0.8):])
     val_list[1].extend(class_list[1][int(ABLATIONS[0]*0.8):])
@@ -95,6 +99,8 @@ for cls in CLASSES:
         azure_val_list[0].append(
             f'{azure_val_uploads}{file_name}')
         azure_val_list[1].append(file_class)
+    aws_train_list[0].extend(val_list[0])
+    aws_train_list[1].extend(val_list[1])
 
 
 with open(f'train_{ABLATIONS[0]}.csv', 'w') as f:
@@ -112,6 +118,9 @@ with open(f'train_nyckel_{ABLATIONS[0]}.csv', 'w') as f:
 with open(f'train_azure_{ABLATIONS[0]}.csv', 'w') as f:
     a = csv.writer(f, delimiter=',')
     a.writerows(zip(*azure_train_list))
+with open(f'train_aws_{ABLATIONS[0]}.csv', 'w') as f:
+    a = csv.writer(f, delimiter=',')
+    a.writerows(zip(*aws_train_list))
 with open(f'val_{ABLATIONS[0]}.csv', 'w') as f:
     a = csv.writer(f, delimiter=',')
     a.writerows(zip(*val_list))
@@ -124,6 +133,9 @@ with open(f'val_hg_{ABLATIONS[0]}.csv', 'w') as f:
 with open(f'val_azure_{ABLATIONS[0]}.csv', 'w') as f:
     a = csv.writer(f, delimiter=',')
     a.writerows(zip(*azure_val_list))
+with open(f'val_aws_{ABLATIONS[0]}.csv', 'w') as f:
+    a = csv.writer(f, delimiter=',')
+    a.writerows(zip(*aws_val_list))
 
 # copy all the files listed in the training list to a new hg_training folder
 # create hg_training folder if it doesn't exist
@@ -145,6 +157,7 @@ for ablation in ABLATIONS[1:]:
     hg_train_list = [['file'], ['label']]
     nyckel_train_list = [[], []]
     azure_train_list = [['image_url'], ['label']]
+    aws_train_list = [[], []]
 
     for cls in CLASSES:
         ablation_count = 0
@@ -166,6 +179,8 @@ for ablation in ABLATIONS[1:]:
         azure_train_list[0].append(
             f'{azure_training_uploads}{file_name}')
         azure_train_list[1].append(file_class)
+    aws_train_list[0].extend(train_list[0])
+    aws_train_list[1].extend(train_list[1])
 
     with open(f'train_{ablation}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
@@ -179,11 +194,15 @@ for ablation in ABLATIONS[1:]:
     with open(f'train_azure_{ablation}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*azure_train_list))
+    with open(f'train_aws_{ablation}.csv', 'w') as f:
+        a = csv.writer(f, delimiter=',')
+        a.writerows(zip(*aws_train_list))
 
     temp_val_list = [[], []]
     vertex_list = [[], []]
     hg_val_list = [['file'], ['label']]
     azure_val_list = [['image_url'], ['label']]
+    aws_val_list = [[], []]
     for cls in CLASSES:
         ablation_count = 0
         for file_name, file_class in zip(val_list[0], val_list[1]):
@@ -204,6 +223,8 @@ for ablation in ABLATIONS[1:]:
         azure_val_list[0].append(
             f'{azure_val_uploads}{file_name}')
         azure_val_list[1].append(file_class)
+    aws_train_list[0].extend(val_list[0])
+    aws_train_list[1].extend(val_list[1])
 
     with open(f'val_{ablation}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
@@ -220,3 +241,6 @@ for ablation in ABLATIONS[1:]:
     with open(f'val_azure_{ablation}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*azure_val_list))
+    with open(f'val_aws_{ablation}.csv', 'w') as f:
+        a = csv.writer(f, delimiter=',')
+        a.writerows(zip(*aws_val_list))

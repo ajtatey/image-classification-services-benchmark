@@ -18,7 +18,7 @@ Run `create_ablations.py`
 python3 create_ablations.py
 ```
 
-This generates 37 `.csv` files and 1 `.txt` in this folder:
+This generates 56 `.csv` files and 1 `.txt` in this folder:
 
 - `chest_xray_train.csv` listing all images in the training folders
 - 5 training and 5 validation files (one for each ablation) formatted `filename, class`, named `train_{ablation}.csv` and `val_{ablation}.csv`
@@ -26,6 +26,7 @@ This generates 37 `.csv` files and 1 `.txt` in this folder:
   5 training and 5 validation files (one for each ablation) formatted `{azure_datastore_name}/filename, class` for use with Azure ML, named `train_azure_{ablation}.csv` and `val_azure_{ablation}.csv`
 - 5 training and 5 validation files (one for each ablation) formatted `filename, class` for use with Huggingface, named `train_hg_{ablation}.csv` and `val_hg_{ablation}.csv`
 - 5 training files (one for each ablation) formatted `filename, class` for use with nyckel, named `train_nyckel_{ablation}.csv`.
+- 5 training files and 5 validation files (one for each ablation) formatted `filename, class` for use with AWS Rekognition, named `train_aws_{ablation}.csv` and `val_aws_{ablation}.csv`.
 - 1 `classes.txt` file containing the class names.
 
 ### Verify Ablation Correctness
@@ -174,3 +175,36 @@ Once you have created your data assets, select the training dataset and click 'N
 Click finish and the job will be created and start. You can find the acuuracy of the model on the Metrics page for the completed model.
 
 ## AWS Rekognition
+
+To setup AWS Rekognition, you need:
+
+- your access key and secret key from your security credentials under your account
+- an S3 bucket for the images
+
+When you have those, set them as environment variables:
+
+```
+export AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID>
+export AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY>
+export AWS_STORAGE_BUCKET_NAME=<AWS_STORAGE_BUCKET_NAME>
+```
+
+Then run:
+
+```
+python3 aws_rekognition.py upload {ablation}
+```
+
+This will upload the images for {ablation} to `train` and `test` folders in the S3 bucket. The images within these folders will be organized into `class` folders.
+
+Once uploaded, go to (Amazon Rekognition Custom Labels)[https://us-east-2.console.aws.amazon.com/rekognition/custom-labels#/] and click Get Started. Choose 'Projects' in the left menu and then 'Create Project'. Name your project then choose 'Create Dataset.' On the next page:
+
+- Choose 'Start with a training dataset and a test dataset'
+- Choose 'Import images from S3 bucket' in Training dataset details and add your train folder S3 URI
+- Choose 'Automatically assign image-level labels to images based on the folder name'
+- Choose 'Import images from S3 bucket' in Test dataset details and add your test folder S3 URI
+- Choose 'Automatically assign image-level labels to images based on the folder name'
+
+Once the data is imported, select 'Train Model,' then 'Train Model' again on the next page.
+
+Once the model has completed training, choose 'Check Metrics' to find the performance of the model.

@@ -57,3 +57,12 @@ for file_name, file_class in zip(test_list[0], test_list[1]):
 with open(f'{test_filename}_hg.csv', 'w') as f:
     a = csv.writer(f, delimiter=',')
     a.writerows(zip(*hg_list))
+
+aws_list = [[], []]
+for file_name, file_class in zip(test_list[0], test_list[1]):
+    aws_list[0].append(file_name)
+    aws_list[1].append(file_class)
+
+with open(f'{test_filename}_aws.csv', 'w') as f:
+    a = csv.writer(f, delimiter=',')
+    a.writerows(zip(*aws_list))
