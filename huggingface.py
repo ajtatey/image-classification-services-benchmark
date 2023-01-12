@@ -6,10 +6,11 @@ import csv
 import os
 
 
-def invoke(inference_endpoint):
+def invoke(inference_endpoint, ablationSize):
     API_URL = f"https://api-inference.huggingface.co/models/{inference_endpoint}"
     access_token = os.getenv('HG_ACCESS_TOKEN')
     headers = {"Authorization": f"Bearer {access_token}"}
+    options = {"wait_for_model": True}
 
     results = [[], [], [], []]
     accurate = 0
@@ -23,7 +24,7 @@ def invoke(inference_endpoint):
             with open(f'test/{row[1]}/{row[0]}', 'rb') as f:
                 data = f.read()
                 response = requests.request(
-                    "POST", API_URL, headers=headers, data=data)
+                    "POST", API_URL, headers=headers, data=data, params=options)
                 print(response.content.decode("utf-8"))
                 results[0].append(row[1])
                 results[1].append(json.loads(
@@ -40,7 +41,7 @@ def invoke(inference_endpoint):
 
             df = pd.DataFrame(results)
             df = df.transpose()
-            df.to_csv(f'xray-results-{str(ablationSize)}.csv',
+            df.to_csv(f'hg-xray-results-{str(ablationSize)}.csv',
                       index=False, header=False)
             print(f'Accuracy: {accurate/total}')
             print(f'Accurate: {accurate}')
@@ -53,4 +54,5 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'invoke':
         inference_endpoint = sys.argv[2]
-        invoke(inference_endpoint)
+        ablationSize = sys.argv[3]
+        invoke(inference_endpoint, ablationSize)

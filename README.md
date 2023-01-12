@@ -20,18 +20,37 @@ python3 create_ablations.py
 
 This generates 37 `.csv` files and 1 `.txt` in this folder:
 
-- 2 main files, `chest_xray_train.csv` and `chest_xray_test.csv` listing all images in the training and testing folders
+- `chest_xray_train.csv` listing all images in the training folders
 - 5 training and 5 validation files (one for each ablation) formatted `filename, class`, named `train_{ablation}.csv` and `val_{ablation}.csv`
 - 5 training and 5 validation files (one for each ablation) formatted `{google_bucket_name}/{training_uploads|val_uploads}/filename, class` for use with Vertex AI, named `train_vertex_{ablation}.csv` and `val_vertex_{ablation}.csv`
+  5 training and 5 validation files (one for each ablation) formatted `{azure_datastore_name}/filename, class` for use with Azure ML, named `train_azure_{ablation}.csv` and `val_azure_{ablation}.csv`
 - 5 training and 5 validation files (one for each ablation) formatted `filename, class` for use with Huggingface, named `train_hg_{ablation}.csv` and `val_hg_{ablation}.csv`
 - 5 training files (one for each ablation) formatted `filename, class` for use with nyckel, named `train_nyckel_{ablation}.csv`.
 - 1 `classes.txt` file containing the class names.
 
-2 folders are also generated, `training_uploads` and `val_uploads` that contain all the images to be used.
-
 ### Verify Ablation Correctness
 
 Generate data-files then run `pytest`
+
+## Create Testing data
+
+Run `create_tests.py`
+
+```bash
+python3 create_tests.py
+```
+
+This will create 5 testing files, one for each of the ML services.
+
+## Create data folders
+
+Run `create_folders.py`
+
+```bash
+python3 create_folders.py
+```
+
+This will create 10 folders containing training and validation data for each of the ablations. These can be used with huggingface.
 
 ## Nyckel
 
@@ -43,7 +62,7 @@ export NYCKEL_CLIENT_ID=<Your client ID>export NYCKEL_CLIENT_SECRET=<Your client
 
 Then run:
 
-```json
+```bash
 python3 nyckel.py create <function_name>
 ```
 
@@ -63,7 +82,7 @@ python nyckel.py invoke <your_function_id> <ablation_size>
 
 This will invoke the model endpoint against each image listed in `chest_xray_test.csv` and give you a running accuracy score, as well as outputting `xray-results-{ablation_size}.csv` which has the format:
 
-```json
+```bash
 actual_class, predicted_class, confidence, invoke_time
 ```
 
@@ -74,11 +93,11 @@ Create a ‘new project’ at [https://ui.autotrain.huggingface.co/projects](htt
 Choose Use a .CSV or .JSONL file (Method 2) and then:
 
 1. select the `train_hg_{ablation}.csv` for the ablation size you want to test.
-2. Then add the images from the `training_uploads` folder.
+2. Then add the images from the `training_uploads_{ablation}` folder.
 3. Choose ‘Training’ as the split type.
 4. Then map the data column names
 
-Do the same for the corresponding `val_hg_{ablation}.csv`.
+Do the same for the corresponding `val_hg_{ablation}.csv` and `val_uploads_{ablation}`.
 
 When uploaded, choose 'go to trainings,' select number of model candidates, and then 'start models training.' Once hte models have trained, choose the most accurate one and 'view on model hub' and copy the model name to use as you `inference_endpoint`.
 
@@ -88,7 +107,7 @@ Run:
 python3 huggingface.py invoke <inference_endpoint>
 ```
 
-This will invoke the model endpoint against each image listed in `chest_xray_test.csv` and give you a running accuracy score, as well as outputting `xray-results-{ablation_size}.csv` which has the format:
+This will invoke the model endpoint against each image listed in `chest_xray_test_hg.csv` and give you a running accuracy score, as well as outputting `xray-results-{ablation_size}.csv` which has the format:
 
 ```json
 actual_class, predicted_class, confidence, invoke_time
@@ -98,7 +117,7 @@ actual_class, predicted_class, confidence, invoke_time
 
 Go to [https://console.cloud.google.com/storage/create-bucket](https://console.cloud.google.com/storage/create-bucket) and create a new bucket the same as `google_bucket_name`. You will need to also create a credentials json file for your service account, then add that json to `ml-benchmarking`. Then run:
 
-```json
+```bash
 python3 vertex.py
 ```
 
@@ -114,3 +133,44 @@ Once they have uploaded, go to [https://console.cloud.google.com/vertex-ai/datas
 Once the dataset has imported, choose ‘Train new model.’ Choose Advanced Options and then a ‘Manual’ data split.
 
 Once the model has trained, the accuracy will be available in the UI.
+
+## Microsoft Azure
+
+After you sign up for Azure Machine Learning, create a workspace. Take note of the workspace and resource group name.
+
+You'll initially have to create credentials for accessing Azure using the SDK. To do so run the Azure CLI with:
+
+```bash
+az login
+```
+
+This will return an object containing your tenant and subscription ids. Firstly run:
+
+```
+az ad sp create-for-rbac --sdk-auth --name ml-auth --role Contributor --scopes /subscriptions/<SUBSCRIPTION_ID>
+```
+
+with your SUBSCRIPTION_ID to create a contributor role. This will give you a client id and client secret you'll need to use the SDK. Add these to your environmental variables:
+
+```
+export AZURE_CLIENT_ID=<CLIENT_ID>
+export AZURE_TENANT_ID=<TENANT_ID>
+export AZURE_CLIENT_SECRET=<CLIENT_SECRET>
+```
+
+Within `azure_ml.py` add your subscription_id, resource_group, and workspace_name.
+Then you can run:
+
+```
+python3 azure_ml.py upload
+```
+
+This will upload the training, validation, and testing data to separate data blobs. (note: do this before running `create_ablations.py` as you'll need these blobs for the image urls).
+
+Once uploaded, go to (https://ml.azure.com/)[https://ml.azure.com/] and choose your workspace. Choose 'Automated ML,' then 'New Automated ML job.' On the next page select 'Create' to add a new data asset, give it a name, select 'Next' and then 'From local files.' Choose a datastore then choose Upload on the next page. Choose you initial ablation training file (e.g. `train_azure_5.csv`). Click through the pages and 'Create.' Then do the same for the validation and testing files.
+
+Once you have created your data assets, select the training dataset and click 'Next.' On the next page, choose 'label' as the target and either an existing compute cluster or create a new compute cluster. Select 'Classification' on the next page. On the next page choose 'User validation data' as the validation type and choose the validation file. Choose 'Provide a test data asset' as the Test data asset and choose the test file.
+
+Click finish and the job will be created and start. You can find the acuuracy of the model on the Metrics page for the completed model.
+
+## AWS Rekognition
