@@ -1,15 +1,13 @@
 import boto3
 import csv
 import sys
+import os
 
 
 def upload_folder(ablation):
-    # os.getenv('AWS_ACCESS_KEY_ID')
-    AWS_ACCESS_KEY_ID = 'AKIAT434HFX5FQ2APAO6'
-    # os.getenv('AWS_SECRET_ACCESS_KEY')
-    AWS_SECRET_ACCESS_KEY = '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'
-    # os.getenv('AWS_STORAGE_BUCKET_NAME')
-    AWS_STORAGE_BUCKET_NAME = 'argot-chest-xrays'
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
     s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID,
                       aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
     with open(f'train_aws_{ablation}.csv') as csvfile:
