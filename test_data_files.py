@@ -12,7 +12,7 @@ def test_ablation_files_correct_size():
         assert len(ablation_data_val) == 2 * ablation_sizes[ablation_size_index] * 0.2
 
 def test_no_split_mixing():
-    with open(f"chest_xray_test.csv") as ablation_file:
+    with open(f"chest_xray_test_nyckel.csv") as ablation_file:
         ablation_data_test = ablation_file.readlines()
     for ablation_size_index in range(len(ablation_sizes)):
             with open(f"train_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
@@ -63,8 +63,8 @@ def test_vertex_files():
                 ablation_data = ablation_file.readlines()
             with open(f"{split}_vertex_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
                 vertex_data = ablation_file.readlines()
-            vertex_data = [entry.removeprefix("gs://chest-xray/training_uploads/") for entry in vertex_data]
-            vertex_data = [entry.removeprefix("gs://chest-xray/val_uploads/") for entry in vertex_data]
+            vertex_data = [entry.removeprefix("gs://argot-xrays/training_uploads/") for entry in vertex_data]
+            vertex_data = [entry.removeprefix("gs://argot-xrays/val_uploads/") for entry in vertex_data]
             assert set(vertex_data) == set(ablation_data), f"failed on {split} {ablation_size_index}"
 
 def test_huggingface_files():
@@ -72,7 +72,7 @@ def test_huggingface_files():
         for ablation_size_index in range(len(ablation_sizes)):
             with open(f"{split}_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
                 ablation_data = ablation_file.readlines()
-            with open(f"{split}_vertex_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            with open(f"{split}_hg_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
                 hf_data = ablation_file.readlines()
             hf_data = hf_data[1:]  # Pop header
             assert set(hf_data) == set(ablation_data), f"failed on {split} {ablation_size_index}"
