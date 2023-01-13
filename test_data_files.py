@@ -76,3 +76,25 @@ def test_huggingface_files():
                 hf_data = ablation_file.readlines()
             hf_data = hf_data[1:]  # Pop header
             assert set(hf_data) == set(ablation_data), f"failed on {split} {ablation_size_index}"
+
+def test_aws_files():
+    for split in ["train", "val"]:
+        for ablation_size_index in range(len(ablation_sizes)):
+            with open(f"{split}_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+                ablation_data = ablation_file.readlines()
+            with open(f"{split}_aws_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+                aws_data = ablation_file.readlines()
+            assert set(aws_data) == set(ablation_data), f"failed on {split} {ablation_size_index}"
+
+def test_azure_files():
+    for split in ["train", "val"]:
+        for ablation_size_index in range(len(ablation_sizes)):
+            with open(f"{split}_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+                ablation_data = ablation_file.readlines()
+            with open(f"{split}_azure_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+                azure_data = ablation_file.readlines()
+            azure_data = azure_data[1:]  # Pop header
+            azure_data = [entry.removeprefix("azureml://training_uploads/") for entry in azure_data]
+            azure_data = [entry.removeprefix("azureml://val_uploads/") for entry in azure_data]
+            
+            assert set(azure_data) == set(ablation_data), f"failed on {split} {ablation_size_index}"
