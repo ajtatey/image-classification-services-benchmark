@@ -6,29 +6,29 @@ def test_ablation_files_correct_size():
         with open(f"train_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
             ablation_data_train = ablation_file.readlines()
         assert len(ablation_data_train) == 2 * \
-            ablation_sizes[ablation_size_index] * 0.8
+                   ablation_sizes[ablation_size_index] * 0.8
 
         with open(f"val_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
             ablation_data_val = ablation_file.readlines()
         assert len(ablation_data_val) == 2 * \
-            ablation_sizes[ablation_size_index] * 0.2
+                   ablation_sizes[ablation_size_index] * 0.2
 
 
 def test_no_split_mixing():
-    with open(f"chest_xray_test.csv") as ablation_file:
+    with open(f"chest_xray_test_nyckel.csv") as ablation_file:
         ablation_data_test = ablation_file.readlines()
     for ablation_size_index in range(len(ablation_sizes)):
-        with open(f"train_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
-            ablation_data_train = ablation_file.readlines()
-        with open(f"val_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
-            ablation_data_val = ablation_file.readlines()
-        for entry in ablation_data_train:
-            assert entry not in ablation_data_test
-            assert entry not in ablation_data_val
+           with open(f"train_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+                ablation_data_train = ablation_file.readlines()
+            with open(f"val_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+                ablation_data_val = ablation_file.readlines()
+            for entry in ablation_data_train:
+                assert entry not in ablation_data_test
+                assert entry not in ablation_data_val
 
-        for entry in ablation_data_val:
-            assert entry not in ablation_data_test
-            assert entry not in ablation_data_train
+            for entry in ablation_data_val:
+                assert entry not in ablation_data_test
+                assert entry not in ablation_data_train
 
 
 def test_ablations_are_cumulative():
@@ -72,9 +72,9 @@ def test_vertex_files():
             with open(f"{split}_vertex_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
                 vertex_data = ablation_file.readlines()
             vertex_data = [entry.removeprefix(
-                "gs://chest-xray/training_uploads/") for entry in vertex_data]
+                "gs://argot-xrays/training_uploads/") for entry in vertex_data]
             vertex_data = [entry.removeprefix(
-                "gs://chest-xray/val_uploads/") for entry in vertex_data]
+                "gs://argot-xrays/val_uploads/") for entry in vertex_data]
             assert set(vertex_data) == set(
                 ablation_data), f"failed on {split} {ablation_size_index}"
 
@@ -91,16 +91,28 @@ def test_huggingface_files():
                 ablation_data), f"failed on {split} {ablation_size_index}"
 
 
-def test_vertex_files():
+def test_aws_files():
+    for split in ["train", "val"]:
+        for ablation_size_index in range(len(ablation_sizes)):
+            with open(f"{split}_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+                ablation_data = ablation_file.readlines()
+            with open(f"{split}_aws_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+                aws_data = ablation_file.readlines()
+            assert set(aws_data) == set(
+                ablation_data), f"failed on {split} {ablation_size_index}"
+
+
+def test_azure_files():
     for split in ["train", "val"]:
         for ablation_size_index in range(len(ablation_sizes)):
             with open(f"{split}_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
                 ablation_data = ablation_file.readlines()
             with open(f"{split}_azure_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
-                vertex_data = ablation_file.readlines()
-            vertex_data = [entry.removeprefix(
-                "gs://chest-xray/training_uploads/") for entry in vertex_data]
-            vertex_data = [entry.removeprefix(
-                "gs://chest-xray/val_uploads/") for entry in vertex_data]
-            assert set(vertex_data) == set(
-                ablation_data), f"failed on {split} {ablation_size_index}"
+                azure_data = ablation_file.readlines()
+            azure_data = azure_data[1:]  # Pop header
+            azure_data = [entry.removeprefix(
+                "azureml://training_uploads/") for entry in azure_data]
+            azure_data = [entry.removeprefix(
+                "azureml://val_uploads/") for entry in azure_data]
+
+            assert set(azure_data) == set(ablation_data), f"failed on {split} {ablation_size_index}"
