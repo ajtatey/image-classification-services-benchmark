@@ -159,3 +159,4 @@ gcreds.json
 *.jpeg
 *.jpeg
 data/
+classes.txt
