@@ -199,7 +199,7 @@ python3 azure_ml.py upload <dataset>
 
 This will upload the training, validation, and testing data to separate data blobs. (note: do this before running `create_ablations.py` as you'll need the `azure_training|val|test_uploads` URIs for the image urls).
 
-Once uploaded, go to (https://ml.azure.com/)[https://ml.azure.com/] and choose your workspace. Choose 'Automated ML,' then 'New Automated ML job.' On the next page select 'Create' to add a new data asset, give it a name, select 'Next' and then 'From local files.' Choose a datastore then choose Upload on the next page. Choose you initial ablation training file (e.g. `data/<dataset>/ablations/train_azure_5.csv`). Click through the pages and 'Create.' Then do the same for the validation and testing files.
+Once uploaded, go to [https://ml.azure.com/](https://ml.azure.com/) and choose your workspace. Choose 'Automated ML,' then 'New Automated ML job.' On the next page select 'Create' to add a new data asset, give it a name, select 'Next' and then 'From local files.' Choose a datastore then choose Upload on the next page. Choose you initial ablation training file (e.g. `data/<dataset>/ablations/train_azure_5.csv`). Click through the pages and 'Create.' Then do the same for the validation and testing files.
 
 Once you have created your data assets, select the training dataset and click 'Next.' On the next page, choose 'label' as the target and either an existing compute cluster or create a new compute cluster. Select 'Classification' on the next page. On the next page choose 'User validation data' as the validation type and choose the validation file. Choose 'Provide a test data asset' as the Test data asset and choose the test file.
 
@@ -228,7 +228,7 @@ python3 aws_rekognition.py upload <dataset> <ablation>
 
 This will upload the images for `<ablation>` to `train` and `test` folders in the S3 bucket. The images within these folders will be organized into `class` folders.
 
-Once uploaded, go to (Amazon Rekognition Custom Labels)[https://us-east-2.console.aws.amazon.com/rekognition/custom-labels#/] and click Get Started. Choose 'Projects' in the left menu and then 'Create Project'. Name your project then choose 'Create Dataset.' On the next page:
+Once uploaded, go to [Amazon Rekognition Custom Labels](https://us-east-2.console.aws.amazon.com/rekognition/custom-labels#/) and click Get Started. Choose 'Projects' in the left menu and then 'Create Project'. Name your project then choose 'Create Dataset.' On the next page:
 
 - Choose 'Start with a training dataset and a test dataset'
 - Choose 'Import images from S3 bucket' in Training dataset details and add your train folder S3 URI
