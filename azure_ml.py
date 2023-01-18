@@ -36,9 +36,10 @@ def get_mlclient():
     return ml_client
 
 
-def upload():
+def upload(dataset):
 
-    dataset_dirs = ["test_uploads", "train_uploads", "val_uploads"]
+    dataset_dirs = [f"data/{dataset}/test_uploads",
+                    f"data/{dataset}/training_uploads", f"data/{dataset}/val_uploads"]
 
     for dataset_dir in dataset_dirs:
         my_data = Data(
@@ -58,4 +59,5 @@ def upload():
 
 if __name__ == '__main__':
     if sys.argv[1] == 'upload':
-        upload()
+        dataset = sys.argv[2]
+        upload(dataset)
