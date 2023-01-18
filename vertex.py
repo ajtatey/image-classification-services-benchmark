@@ -1,6 +1,7 @@
 from google.cloud import storage
 import os
-# pip install --upgrade google-cloud-storage.
+import sys
+from create_tests import get_bucket_uris
 
 
 def upload_to_bucket(blob_name, path_to_file, bucket_name):
@@ -19,13 +20,21 @@ def upload_to_bucket(blob_name, path_to_file, bucket_name):
     return blob.public_url
 
 
-dataset = 'gs://chest-xray'
-for file in os.listdir('training_uploads'):
-    public_url = upload_to_bucket(
-        file, f'training_uploads/{file}', dataset)
-    print(public_url)
+def upload(dataset, google_bucket_name):
 
-for file in os.listdir('val_uploads'):
-    public_url = upload_to_bucket(
-        file, f'val_uploads/{file}', dataset)
-    print(public_url)
+    for file in os.listdir(f'data/{dataset}/training_uploads'):
+        public_url = upload_to_bucket(
+            file, f'data/{dataset}/training_uploads/{file}', google_bucket_name)
+        print(public_url)
+
+    for file in os.listdir(f'data/{dataset}/val_uploads'):
+        public_url = upload_to_bucket(
+            file, f'data/{dataset}/val_uploads/{file}', google_bucket_name)
+        print(public_url)
+
+
+if __name__ == '__main__':
+    dataset = sys.argv[1]
+    google_bucket_name, _, _, _ = get_bucket_uris(
+        dataset)
+    upload(dataset, google_bucket_name)
