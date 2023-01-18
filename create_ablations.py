@@ -5,7 +5,7 @@ import random
 import shutil
 import sys
 
-training_list_filename = 'chest_xray_train.csv'
+
 google_bucket_name = 'gs://argot-xrays'
 azure_training_uploads = 'azureml://training_uploads/'
 azure_val_uploads = 'azureml://val_uploads/'
@@ -38,32 +38,37 @@ def get_ablations(dataset):
     return ablations[ablation_index:]
 
 
-def main(ablations):
-
+def create_main_training_list(dataset):
     # get the class names from the training folder
-    CLASSES = os.listdir('train')
+    classes = os.listdir(f'data/{dataset}/train/')
     # save the class names to a file
-    if ".DS_Store" in CLASSES:
-        CLASSES.remove('.DS_Store')
+    if ".DS_Store" in classes:
+        classes.remove('.DS_Store')
     with open('classes.txt', 'w') as f:
-        f.write(','.join(CLASSES))
+        f.write(','.join(classes))
     # create a training list from all the files in the training folder
     training_list = []
-    for cls in CLASSES:
+    for cls in classes:
         training_list.extend([file, cls]
-                             for file in os.listdir(f'train/{cls}'))
+                             for file in os.listdir(f'data/{dataset}/train/{cls}'))
 
     # shuffle the training list
     random.seed(0)
     random.shuffle(training_list)
     # write the training list to a csv
-    with open(training_list_filename, 'w') as f:
+    with open(f'data/{dataset}/{dataset}_train.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(training_list)
+
+    return classes
+
+
+def create_ablation_files(dataset, classes, ablations):
+
     class_list = [[], []]
     train_list = [[], []]
     val_list = [[], []]
-    for cls in CLASSES:
+    for cls in classes:
         ablation_count = 0
         class_list = [[], []]
         vertex_train_list = [[], []]
@@ -75,7 +80,7 @@ def main(ablations):
         nyckel_train_list = [[], []]
         aws_train_list = [[], []]
         aws_val_list = [[], []]
-        with open(training_list_filename) as csvfile:
+        with open(f'data/{dataset}/{dataset}_train.csv') as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
                 if row[1] == cls and ablation_count < ablations[0]:
@@ -117,53 +122,56 @@ def main(ablations):
         aws_val_list[0].extend(val_list[0])
         aws_val_list[1].extend(val_list[1])
 
-    with open(f'train_{ablations[0]}.csv', 'w') as f:
+    if not os.path.exists(f'data/{dataset}/ablations'):
+        os.makedirs(f'data/{dataset}/ablations')
+
+    with open(f'data/{dataset}/ablations/{dataset}_train_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*train_list))
-    with open(f'train_vertex_{ablations[0]}.csv', 'w') as f:
+    with open(f'data/{dataset}/ablations/{dataset}_train_vertex_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*vertex_train_list))
-    with open(f'train_hg_{ablations[0]}.csv', 'w') as f:
+    with open(f'data/{dataset}/ablations/{dataset}_train_hg_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*hg_train_list))
-    with open(f'train_nyckel_{ablations[0]}.csv', 'w') as f:
+    with open(f'data/{dataset}/ablations/{dataset}_train_nyckel_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*nyckel_train_list))
-    with open(f'train_azure_{ablations[0]}.csv', 'w') as f:
+    with open(f'data/{dataset}/ablations/{dataset}_train_azure_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*azure_train_list))
-    with open(f'train_aws_{ablations[0]}.csv', 'w') as f:
+    with open(f'data/{dataset}/ablations/{dataset}_train_aws_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*aws_train_list))
-    with open(f'val_{ablations[0]}.csv', 'w') as f:
+    with open(f'data/{dataset}/ablations/{dataset}_val_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*val_list))
-    with open(f'val_vertex_{ablations[0]}.csv', 'w') as f:
+    with open(f'data/{dataset}/ablations/{dataset}_val_vertex_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*vertex_val_list))
-    with open(f'val_hg_{ablations[0]}.csv', 'w') as f:
+    with open(f'data/{dataset}/ablations/{dataset}_val_hg_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*hg_val_list))
-    with open(f'val_azure_{ablations[0]}.csv', 'w') as f:
+    with open(f'data/{dataset}/ablations/{dataset}_val_azure_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*azure_val_list))
-    with open(f'val_aws_{ablations[0]}.csv', 'w') as f:
+    with open(f'data/{dataset}/ablations/{dataset}_val_aws_{ablations[0]}.csv', 'w') as f:
         a = csv.writer(f, delimiter=',')
         a.writerows(zip(*aws_val_list))
 
     # copy all the files listed in the training list to a new hg_training folder
     # create hg_training folder if it doesn't exist
-    if not os.path.exists('training_uploads'):
-        os.makedirs('training_uploads')
+    if not os.path.exists(f'data/{dataset}/training_uploads'):
+        os.makedirs(f'data/{dataset}/training_uploads')
 
     for file_name, file_class in zip(train_list[0], train_list[1]):
-        shutil.copyfile(f'train/{file_class}/{file_name}',
-                        f'training_uploads/{file_name}')
-    if not os.path.exists('val_uploads'):
-        os.makedirs('val_uploads')
+        shutil.copyfile(f'data/{dataset}/train/{file_class}/{file_name}',
+                        f'data/{dataset}/training_uploads/{file_name}')
+    if not os.path.exists(f'data/{dataset}/val_uploads'):
+        os.makedirs(f'data/{dataset}/val_uploads')
     for file_name, file_class in zip(val_list[0], val_list[1]):
-        shutil.copyfile(f'train/{file_class}/{file_name}',
-                        f'val_uploads/{file_name}')
+        shutil.copyfile(f'data/{dataset}/train/{file_class}/{file_name}',
+                        f'data/{dataset}/val_uploads/{file_name}')
 
     for ablation in ablations[1:]:
         temp_train_list = [[], []]
@@ -173,7 +181,7 @@ def main(ablations):
         azure_train_list = [['image_url'], ['label']]
         aws_train_list = [[], []]
 
-        for cls in CLASSES:
+        for cls in classes:
             ablation_count = 0
             for file_name, file_class in zip(train_list[0], train_list[1]):
                 if file_class == cls and ablation_count < int(ablation*0.8):
@@ -196,19 +204,19 @@ def main(ablations):
         aws_train_list[0].extend(train_list[0])
         aws_train_list[1].extend(train_list[1])
 
-        with open(f'train_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_train_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*train_list))
-        with open(f'train_vertex_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_train_vertex_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*vertex_list))
-        with open(f'train_hg_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_train_hg_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*hg_train_list))
-        with open(f'train_azure_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_train_azure_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*azure_train_list))
-        with open(f'train_aws_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_train_aws_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*aws_train_list))
 
@@ -217,7 +225,7 @@ def main(ablations):
         hg_val_list = [['file'], ['label']]
         azure_val_list = [['image_url'], ['label']]
         aws_val_list = [[], []]
-        for cls in CLASSES:
+        for cls in classes:
             ablation_count = 0
             for file_name, file_class in zip(val_list[0], val_list[1]):
                 if file_class == cls and ablation_count < ablation*0.2:
@@ -240,22 +248,22 @@ def main(ablations):
         aws_val_list[0].extend(val_list[0])
         aws_val_list[1].extend(val_list[1])
 
-        with open(f'val_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_val_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*val_list))
-        with open(f'val_vertex_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_val_vertex_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*vertex_list))
-        with open(f'val_hg_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_val_hg_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*hg_val_list))
-        with open(f'train_nyckel_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_train_nyckel_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*nyckel_train_list))
-        with open(f'val_azure_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_val_azure_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*azure_val_list))
-        with open(f'val_aws_{ablation}.csv', 'w') as f:
+        with open(f'data/{dataset}/ablations/{dataset}_val_aws_{ablation}.csv', 'w') as f:
             a = csv.writer(f, delimiter=',')
             a.writerows(zip(*aws_val_list))
 
@@ -264,4 +272,5 @@ if __name__ == '__main__':
     dataset = sys.argv[1]
     ablations = get_ablations(dataset)
     print(ablations)
-    # main(ablations)
+    classes = create_main_training_list(dataset)
+    create_ablation_files(dataset, classes, ablations)
