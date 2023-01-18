@@ -32,7 +32,7 @@ def mat_to_csv(training_set):
 
 
 def move_validation_to_train(training_set):
-    if training_set == 'beans':
+    if training_set == 'beans' and os.path.exists(f'data/{training_set}/validation/'):
         classes = ['healthy', 'angular_leaf_spot', 'bean_rust']
         for class_ in classes:
             for file in os.listdir(f'data/{training_set}/validation/{class_}'):
@@ -40,7 +40,7 @@ def move_validation_to_train(training_set):
                             f'data/{training_set}/train/{class_}/{file}')
             os.rmdir(f'data/{training_set}/validation/{class_}')
         os.rmdir(f'data/{training_set}/validation/')
-    if training_set == 'xrays':
+    if training_set == 'xrays' and os.path.exists(f'data/{training_set}/chest_xray/val'):
         classes = ['NORMAL', 'PNEUMONIA']
         for class_ in classes:
             for file in os.listdir(f'data/{training_set}/chest_xray/val/{class_}'):
@@ -51,7 +51,7 @@ def move_validation_to_train(training_set):
 
 
 def create_train_and_test_dirs(training_set):
-    if training_set in ['cars', 'food', 'pets']:
+    if training_set in ['cars', 'food', 'pets', 'intel', 'xrays']:
         if not os.path.exists(f'data/{training_set}/train'):
             os.makedirs(f'data/{training_set}/train')
         if not os.path.exists(f'data/{training_set}/test'):
@@ -128,6 +128,43 @@ def move_images_to_class_dirs(training_set):
                             f'data/pets/test/{class_}/{image}.jpg')
 
 
+def move_classes_folders_and_images_to_test_and_train(training_set):
+    if training_set == 'intel':
+        classes = os.listdir('data/intel/seg_train/seg_train')
+        for class_ in classes:
+            if not os.path.exists(f'data/intel/train/{class_}'):
+                os.makedirs(f'data/intel/train/{class_}')
+            images = os.listdir(f'data/intel/seg_train/seg_train/{class_}')
+            for image in images:
+                shutil.move(f'data/intel/seg_train/seg_train/{class_}/{image}',
+                            f'data/intel/train/{class_}/{image}')
+        classes = os.listdir('data/intel/seg_test/seg_test')
+        for class_ in classes:
+            if not os.path.exists(f'data/intel/test/{class_}'):
+                os.makedirs(f'data/intel/test/{class_}')
+            images = os.listdir(f'data/intel/seg_test/seg_test/{class_}')
+            for image in images:
+                shutil.move(f'data/intel/seg_test/seg_test/{class_}/{image}',
+                            f'data/intel/test/{class_}/{image}')
+    if training_set == 'xrays':
+        classes = os.listdir('data/xrays/chest_xray/train')
+        for class_ in classes:
+            if not os.path.exists(f'data/xrays/train/{class_}'):
+                os.makedirs(f'data/xrays/train/{class_}')
+            images = os.listdir(f'data/xrays/chest_xray/train/{class_}')
+            for image in images:
+                shutil.move(f'data/xrays/chest_xray/train/{class_}/{image}',
+                            f'data/xrays/train/{class_}/{image}')
+        classes = os.listdir('data/xrays/chest_xray/test')
+        for class_ in classes:
+            if not os.path.exists(f'data/xrays/test/{class_}'):
+                os.makedirs(f'data/xrays/test/{class_}')
+            images = os.listdir(f'data/xrays/chest_xray/test/{class_}')
+            for image in images:
+                shutil.move(f'data/xrays/chest_xray/test/{class_}/{image}',
+                            f'data/xrays/test/{class_}/{image}')
+
+
 if __name__ == '__main__':
     training_set = sys.argv[1]
     extract_dataset(training_set)
@@ -136,3 +173,4 @@ if __name__ == '__main__':
     create_train_and_test_dirs(training_set)
     create_class_dirs(training_set)
     move_images_to_class_dirs(training_set)
+    move_classes_folders_and_images_to_test_and_train(training_set)
