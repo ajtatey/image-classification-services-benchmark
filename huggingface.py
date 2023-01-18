@@ -15,13 +15,13 @@ def invoke(inference_endpoint, ablationSize):
     results = [[], [], [], []]
     accurate = 0
     total = 0
-    with open('chest_xray_test.csv') as csvfile:
+    with open(f'data/{dataset}/{dataset}_test_hg.csv') as csvfile:
         reader = csv.reader(csvfile)
         # get the class labels from classes.txt
 
         for row in reader:
             print(row[0])
-            with open(f'test/{row[1]}/{row[0]}', 'rb') as f:
+            with open(f'data/{dataset}/test/{row[1]}/{row[0]}', 'rb') as f:
                 data = f.read()
                 response = requests.request(
                     "POST", API_URL, headers=headers, data=data, params=options)
@@ -41,7 +41,7 @@ def invoke(inference_endpoint, ablationSize):
 
             df = pd.DataFrame(results)
             df = df.transpose()
-            df.to_csv(f'hg-xray-results-{str(ablationSize)}.csv',
+            df.to_csv(f'data/{dataset}/hg-{dataset}-results-{str(ablationSize)}.csv',
                       index=False, header=False)
             print(f'Accuracy: {accurate/total}')
             print(f'Accurate: {accurate}')
@@ -50,9 +50,8 @@ def invoke(inference_endpoint, ablationSize):
 
 if __name__ == '__main__':
 
-    # swicth between prepare() and invoke() depending on the argument
-
     if sys.argv[1] == 'invoke':
         inference_endpoint = sys.argv[2]
-        ablationSize = sys.argv[3]
-        invoke(inference_endpoint, ablationSize)
+        dataset = sys.argv[3]
+        ablationSize = sys.argv[4]
+        invoke(inference_endpoint, dataset, ablationSize)
