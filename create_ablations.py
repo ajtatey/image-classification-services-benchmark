@@ -6,11 +6,6 @@ import shutil
 import sys
 
 
-google_bucket_name = 'gs://argot-xrays'
-azure_training_uploads = 'azureml://training_uploads/'
-azure_val_uploads = 'azureml://val_uploads/'
-
-
 def get_ablations(dataset):
     ablations = [1280, 320, 80, 20, 5]
 
@@ -44,7 +39,7 @@ def create_main_training_list(dataset):
     # save the class names to a file
     if ".DS_Store" in classes:
         classes.remove('.DS_Store')
-    with open('classes.txt', 'w') as f:
+    with open(f'data/{dataset}/classes.txt', 'w') as f:
         f.write(','.join(classes))
     # create a training list from all the files in the training folder
     training_list = []
@@ -63,7 +58,19 @@ def create_main_training_list(dataset):
     return classes
 
 
-def create_ablation_files(dataset, classes, ablations):
+def get_bucket_uris(dataset):
+    # get the bucket name from the config file
+    with open('bucket_config.json') as f:
+        config = json.load(f)
+    google_bucket_name = config[dataset]['google_bucket_name']
+    azure_training_uploads = config[dataset]['azure_training_uploads']
+    azure_val_uploads = config[dataset]['azure_val_uploads']
+    azure_test_uploads = config[dataset]['azure_test_uploads']
+
+    return google_bucket_name, azure_training_uploads, azure_val_uploads, azure_test_uploads
+
+
+def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure_training_uploads, azure_val_uploads):
 
     class_list = [[], []]
     train_list = [[], []]
@@ -273,4 +280,7 @@ if __name__ == '__main__':
     ablations = get_ablations(dataset)
     print(ablations)
     classes = create_main_training_list(dataset)
-    create_ablation_files(dataset, classes, ablations)
+    google_bucket_name, azure_training_uploads, azure_val_uploads, _ = get_bucket_uris(
+        dataset)
+    create_ablation_files(dataset, classes, ablations,
+                          google_bucket_name, azure_training_uploads, azure_val_uploads)
