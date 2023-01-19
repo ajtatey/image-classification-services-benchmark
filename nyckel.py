@@ -42,7 +42,7 @@ def create_label(access_token, classes, function_id):
 
 def upload(access_token, function_id, ablationSize, dataset):
 
-    training_file = f'data/{dataset}/train_nyckel_{ablationSize}.csv'
+    training_file = f'data/{dataset}/ablations/{dataset}_train_nyckel_{ablationSize}.csv'
 
     with open(f'data/{dataset}/classes.txt') as f:
         classes = f.read().split(',')
