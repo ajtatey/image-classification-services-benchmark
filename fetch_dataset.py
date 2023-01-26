@@ -69,7 +69,7 @@ def fetch_dataset(training_set, force_redo_download=False):
             force_redo_download,
         )
 
-    elif training_set == "cars":
+    if training_set == "cars":
         fetch_from_www(
             path,
             [
@@ -78,7 +78,7 @@ def fetch_dataset(training_set, force_redo_download=False):
             ],
             force_redo_download,
         )
-    elif training_set == "pets":
+    if training_set == "pets":
         fetch_from_www(
             path,
             [
@@ -87,13 +87,13 @@ def fetch_dataset(training_set, force_redo_download=False):
             ],
             force_redo_download,
         )
-    elif training_set == "food":
+    if training_set == "food":
         fetch_from_www(
             path,
             ["http://data.vision.ee.ethz.ch/cvl/food-101.tar.gz"],
             force_redo_download,
         )
-    elif training_set == "shopping":
+    if training_set == "shopping":
         pass
 
 
