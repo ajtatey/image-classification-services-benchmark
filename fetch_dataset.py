@@ -1,54 +1,102 @@
-from kaggle.api.kaggle_api_extended import KaggleApi
-import sys
-import requests
+import functools
 import os
-from io import BytesIO
-from urllib.request import urlopen
-from zipfile import ZipFile
+import pathlib
+import shutil
+import sys
+from typing import List
 
-zipurl = 'https://drive.google.com/uc?export=download&id=1yAmFc15GtP52El_RTxl6uqmZZJi-h4BG'
+import requests
+from kaggle.api.kaggle_api_extended import KaggleApi
+from tqdm.auto import tqdm
+
+zipurl = "https://drive.google.com/uc?export=download&id=1yAmFc15GtP52El_RTxl6uqmZZJi-h4BG"
+
+
+def download(url, filename):
+
+    r = requests.get(url, stream=True, allow_redirects=True)
+    if r.status_code != 200:
+        r.raise_for_status()  # Will only raise for 4xx codes, so...
+        raise RuntimeError(f"Request to {url} returned status code {r.status_code}")
+    file_size = int(r.headers.get("Content-Length", 0))
+
+    path = pathlib.Path(filename).expanduser().resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    desc = "(Unknown total file size)" if file_size == 0 else ""
+    r.raw.read = functools.partial(r.raw.read, decode_content=True)  # Decompress if needed
+    with tqdm.wrapattr(r.raw, "read", total=file_size, desc=desc) as r_raw:
+        with path.open("wb") as f:
+            shutil.copyfileobj(r_raw, f)
+
+    return path
+
+
+def fetch_from_www(base_path, data_urls: List[str], force_redo_download):
+    for data_url in data_urls:
+        target_file = f"{base_path}{data_url.split('/')[-1]}"
+        if not os.path.exists(target_file) or force_redo_download:
+            print(f"Fetching {data_url} from remote")
+            download(data_url, target_file)
+
+
+def fetch_from_kaggle(key: str, target_path: str, force_redo_download: bool):
+
+    if not os.path.exists(target_path) or force_redo_download:
+        if not os.path.exists(target_path):
+            os.makedirs(target_path)
+        api = KaggleApi()
+        api.authenticate()
+        print("Fetching {key} to {target_path}")
+        api.dataset_download_files(key, path=target_path, unzip=True)
 
 
 def fetch_dataset(training_set, force_redo_download=False):
-    path = f'data/{training_set}/'
-    if not os.path.exists(path):
-        os.makedirs(path)
-    if training_set == 'intel':
-        if not os.path.exists(path) or force_redo_download:
-            api = KaggleApi()
-            api.authenticate()
-            api.dataset_download_files(
-                'puneet6060/intel-image-classification', path=path, unzip=True)
-    elif training_set == 'beans':
-        datasets = ['https://huggingface.co/datasets/beans/resolve/main/data/test.zip',
-                    'https://huggingface.co/datasets/beans/resolve/main/data/train.zip',
-                    'https://huggingface.co/datasets/beans/resolve/main/data/validation.zip']
-    elif training_set == 'xrays':
-        if not os.path.exists(path) or force_redo_download:
-            api = KaggleApi()
-            api.authenticate()
-            api.dataset_download_files(
-                'paultimothymooney/chest-xray-pneumonia', path=path, unzip=True)
-    elif training_set == 'cars':
-        datasets = ['http://ai.stanford.edu/~jkrause/car196/car_ims.tgz',
-                    'http://ai.stanford.edu/~jkrause/car196/cars_annos.mat']
-    elif training_set == 'pets':
-        datasets = ['https://thor.robots.ox.ac.uk/~vgg/data/pets/images.tar.gz',
-                    'https://thor.robots.ox.ac.uk/~vgg/data/pets/annotations.tar.gz']
-    elif training_set == 'food':
-        datasets = ['http://data.vision.ee.ethz.ch/cvl/food-101.tar.gz']
-    elif training_set == 'shopping':
+    path = f"data/{training_set}/"
+    if training_set == "intel":
+        fetch_from_kaggle("puneet6060/intel-image-classification", path)
+    if training_set == "xrays":
+        fetch_from_kaggle("paultimothymooney/chest-xray-pneumonia", path)
+
+    if training_set == "beans":
+        fetch_from_www(
+            path,
+            [
+                "https://huggingface.co/datasets/beans/resolve/main/data/test.zip",
+                "https://huggingface.co/datasets/beans/resolve/main/data/train.zip",
+                "https://huggingface.co/datasets/beans/resolve/main/data/validation.zip",
+            ],
+            force_redo_download,
+        )
+
+    elif training_set == "cars":
+        fetch_from_www(
+            path,
+            [
+                "http://ai.stanford.edu/~jkrause/car196/car_ims.tgz",
+                "http://ai.stanford.edu/~jkrause/car196/cars_annos.mat",
+            ],
+            force_redo_download,
+        )
+    elif training_set == "pets":
+        fetch_from_www(
+            path,
+            [
+                "https://thor.robots.ox.ac.uk/~vgg/data/pets/images.tar.gz",
+                "https://thor.robots.ox.ac.uk/~vgg/data/pets/annotations.tar.gz",
+            ],
+            force_redo_download,
+        )
+    elif training_set == "food":
+        fetch_from_www(
+            path,
+            ["http://data.vision.ee.ethz.ch/cvl/food-101.tar.gz"],
+            force_redo_download,
+        )
+    elif training_set == "shopping":
         pass
 
-    if training_set in ['beans', 'cars', 'pets', 'food']:
-        for dataset in datasets:
-            target_file = f"{path}{dataset.split('/')[-1]}"
-            if not os.path.exists(target_file) or force_redo_download:
-                resp = requests.get(dataset)  # making requests to server
-                # opening a file handler to create new file
-                with open(target_file, "wb") as f:
-                    f.write(resp.content)  # writing content to file
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     training_set = sys.argv[1]
     fetch_dataset(training_set)
