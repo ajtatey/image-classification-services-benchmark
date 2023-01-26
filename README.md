@@ -10,11 +10,13 @@ source env/bin/activate
 
 - Install requirements like so `pip install -r requirements.txt`
 
-## Prepare datap
+## Prepare data
+
+Run `python build_all_data.py` to run all steps below.
 
 ### Fetch Datasets
 
-Fetch Kaggle credential by downloading kaggle.json into ~/.kaggle/kaggle.json. See https://github.com/Kaggle/kaggle-api
+Fetch Kaggle credential by downloading kaggle.json into ~/.kaggle/kaggle.json. See <https://github.com/Kaggle/kaggle-api>
 
 Run `fetch_datasets.py`
 
