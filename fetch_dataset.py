@@ -43,7 +43,7 @@ def fetch_from_www(base_path, data_urls: List[str], force_redo_download):
 def fetch_from_kaggle(key: str, target_path: str, force_redo_download: bool):
 
     if not os.path.exists(target_path) or force_redo_download:
-        print("Fetching {key} to {target_path}")
+        print(f"Fetching {key} from Kaggle to {target_path}")
         os.makedirs(target_path, exist_ok=True)
         api = KaggleApi()
         api.authenticate()
@@ -53,9 +53,9 @@ def fetch_from_kaggle(key: str, target_path: str, force_redo_download: bool):
 def fetch_dataset(training_set, force_redo_download=False):
     path = f"data/{training_set}/"
     if training_set == "intel":
-        fetch_from_kaggle("puneet6060/intel-image-classification", path)
+        fetch_from_kaggle("puneet6060/intel-image-classification", path, force_redo_download)
     if training_set == "xrays":
-        fetch_from_kaggle("paultimothymooney/chest-xray-pneumonia", path)
+        fetch_from_kaggle("paultimothymooney/chest-xray-pneumonia", path, force_redo_download)
 
     if training_set == "beans":
         fetch_from_www(

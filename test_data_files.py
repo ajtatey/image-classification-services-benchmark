@@ -1,16 +1,30 @@
 import pytest
 from collections import Counter
-from build_all_data import DATASETS
+
+ablation_sizes_by_dataset = {
+    "beans": [320, 80, 20, 5],
+    "cars": [20, 5],
+    "food": [320, 80, 20, 5],
+    "intel": [1280, 320, 80, 20, 5],
+    "pets": [80, 20, 5],
+    "xrays": [1280, 320, 80, 20, 5],
+}
+
+n_classes_by_datasets = {
+    "beans": 3,
+    "cars": 196,
+    "food": 101,
+    "intel": 6,
+    "pets": 37,
+    "xrays": 2,
+}
+
+DATASETS = list(n_classes_by_datasets.keys())
 
 
 @pytest.fixture(params=DATASETS)
 def dataset(request):
     return request.param
-
-
-ablation_sizes_by_dataset = {"beans": [320, 80, 20, 5], "cars": [20, 5]}
-
-n_classes_by_datasets = {"beans": 3, "cars": 196}
 
 
 def train_ablation(dataset, ablation_size):
