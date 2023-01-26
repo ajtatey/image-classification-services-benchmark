@@ -275,12 +275,15 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
             a.writerows(zip(*aws_val_list))
 
 
-if __name__ == '__main__':
-    dataset = sys.argv[1]
+def create_ablations_main(dataset: str):
     ablations = get_ablations(dataset)
-    print(ablations)
     classes = create_main_training_list(dataset)
     google_bucket_name, azure_training_uploads, azure_val_uploads, _ = get_bucket_uris(
         dataset)
     create_ablation_files(dataset, classes, ablations,
                           google_bucket_name, azure_training_uploads, azure_val_uploads)
+    return ablations
+
+if __name__ == '__main__':
+    dataset = sys.argv[1]
+    create_ablations_main(dataset)    

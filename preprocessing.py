@@ -164,9 +164,7 @@ def move_classes_folders_and_images_to_test_and_train(training_set):
                 shutil.move(f'data/xrays/chest_xray/test/{class_}/{image}',
                             f'data/xrays/test/{class_}/{image}')
 
-
-if __name__ == '__main__':
-    training_set = sys.argv[1]
+def preprocessing_main(training_set):
     extract_dataset(training_set)
     mat_to_csv(training_set)
     move_validation_to_train(training_set)
@@ -174,3 +172,8 @@ if __name__ == '__main__':
     create_class_dirs(training_set)
     move_images_to_class_dirs(training_set)
     move_classes_folders_and_images_to_test_and_train(training_set)
+
+
+if __name__ == '__main__':
+    training_set = sys.argv[1]
+    preprocessing_main(training_set)

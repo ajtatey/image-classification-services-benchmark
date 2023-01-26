@@ -69,9 +69,11 @@ def create_test_list(dataset, google_bucket_name, azure_test_uploads):
         a.writerows(zip(*aws_list))
 
 
+def create_test_main(dataset):
+    google_bucket_name, _, _, azure_test_uploads = get_bucket_uris(dataset)
+    create_test_list(dataset, google_bucket_name, azure_test_uploads)
+
+
 if __name__ == '__main__':
     dataset = sys.argv[1]
-    google_bucket_name, _, _, azure_test_uploads = get_bucket_uris(
-        dataset)
-    create_test_list(dataset, google_bucket_name,
-                     azure_test_uploads)
+    create_test_list(dataset)    

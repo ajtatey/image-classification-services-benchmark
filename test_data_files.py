@@ -1,7 +1,7 @@
 import pytest
 from collections import Counter
+from build_all_data import DATASETS
 
-DATASETS = ["beans", "cars"]
 @pytest.fixture(params=DATASETS)
 def dataset(request):
     return request.param
