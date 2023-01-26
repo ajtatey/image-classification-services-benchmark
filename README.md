@@ -10,7 +10,11 @@ source env/bin/activate
 
 - Install requirements like so `pip install -r requirements.txt`
 
+## Prepare datap
+
 ### Fetch Datasets
+
+Fetch Kaggle credential by downloading kaggle.json into ~/.kaggle/kaggle.json. See https://github.com/Kaggle/kaggle-api
 
 Run `fetch_datasets.py`
 
@@ -69,7 +73,7 @@ Generate data-files then run `pytest`
 Run `create_tests.py`
 
 ```bash
-python3 create_tests.py
+python3 create_tests.py <dataset>
 ```
 
 This will create 5 testing files, one for each of the ML services.
