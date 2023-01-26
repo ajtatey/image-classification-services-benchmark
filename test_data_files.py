@@ -2,25 +2,24 @@ import pytest
 from collections import Counter
 from build_all_data import DATASETS
 
+
 @pytest.fixture(params=DATASETS)
 def dataset(request):
     return request.param
 
-ablation_sizes_by_dataset = {
-    "beans": [320, 80, 20, 5],
-    "cars": [20, 5]
-}
 
-n_classes_by_datasets = {
-    "beans": 3,
-    "cars": 196
-}
+ablation_sizes_by_dataset = {"beans": [320, 80, 20, 5], "cars": [20, 5]}
+
+n_classes_by_datasets = {"beans": 3, "cars": 196}
+
 
 def train_ablation(dataset, ablation_size):
     return f"data/{dataset}/ablations/{dataset}_train_{ablation_size}.csv"
 
+
 def val_ablation(dataset, ablation_size):
     return f"data/{dataset}/ablations/{dataset}_val_{ablation_size}.csv"
+
 
 def test_ablation_files_correct_size(dataset):
     ablation_sizes = ablation_sizes_by_dataset[dataset]
@@ -57,8 +56,8 @@ def test_ablations_are_cumulative(dataset):
     """Checks that larger ablations contain the data used in smaller ablations"""
     ablation_sizes = ablation_sizes_by_dataset[dataset]
     ablation_sizes.sort()
-    for ablation_size_index in range(len(ablation_sizes)-1):
-        with open(train_ablation(dataset, ablation_sizes[ablation_size_index+1])) as ablation_file:
+    for ablation_size_index in range(len(ablation_sizes) - 1):
+        with open(train_ablation(dataset, ablation_sizes[ablation_size_index + 1])) as ablation_file:
             larger_ablation_data = ablation_file.readlines()
         with open(train_ablation(dataset, ablation_sizes[ablation_size_index])) as ablation_file:
             smaller_ablation_data = ablation_file.readlines()
@@ -71,7 +70,7 @@ def test_ablations_are_balanced(dataset):
     for ablation_size_index in range(len(ablation_sizes)):
         with open(train_ablation(dataset, ablation_sizes[ablation_size_index])) as ablation_file:
             ablation_data = ablation_file.readlines()
-        class_names = [entry.split(',')[1].rstrip().lstrip() for entry in ablation_data]
+        class_names = [entry.split(",")[1].rstrip().lstrip() for entry in ablation_data]
         counts = Counter(class_names)
         for count in counts.values():
             assert count == ablation_sizes[ablation_size_index] * 0.8
@@ -84,7 +83,9 @@ def test_nyckel_files(dataset):
             ablation_data_train = ablation_file.readlines()
         with open(val_ablation(dataset, ablation_sizes[ablation_size_index])) as ablation_file:
             ablation_data_val = ablation_file.readlines()
-        with open(f"data/{dataset}/ablations/{dataset}_train_nyckel_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+        with open(
+            f"data/{dataset}/ablations/{dataset}_train_nyckel_{ablation_sizes[ablation_size_index]}.csv"
+        ) as ablation_file:
             ablation_data_nyckel = ablation_file.readlines()
         for entry in ablation_data_nyckel:
             assert entry in ablation_data_train + ablation_data_val
@@ -94,42 +95,61 @@ def test_vertex_files(dataset):
     ablation_sizes = ablation_sizes_by_dataset[dataset]
     for split in ["train", "val"]:
         for ablation_size_index in range(len(ablation_sizes)):
-            with open(f"data/{dataset}/ablations/{dataset}_{split}_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            with open(
+                f"data/{dataset}/ablations/{dataset}_{split}_{ablation_sizes[ablation_size_index]}.csv"
+            ) as ablation_file:
                 ablation_data = ablation_file.readlines()
-            with open(f"data/{dataset}/ablations/{dataset}_{split}_vertex_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            with open(
+                f"data/{dataset}/ablations/{dataset}_{split}_vertex_{ablation_sizes[ablation_size_index]}.csv"
+            ) as ablation_file:
                 vertex_data = ablation_file.readlines()
             vertex_data = [entry.removeprefix("gs://argot-xrays/training_uploads/") for entry in vertex_data]
             vertex_data = [entry.removeprefix("gs://argot-xrays/val_uploads/") for entry in vertex_data]
             assert set(vertex_data) == set(ablation_data), f"failed on {split} {ablation_size_index}"
 
+
 def test_huggingface_files(dataset):
     ablation_sizes = ablation_sizes_by_dataset[dataset]
     for split in ["train", "val"]:
         for ablation_size_index in range(len(ablation_sizes)):
-            with open(f"data/{dataset}/ablations/{dataset}_{split}_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            with open(
+                f"data/{dataset}/ablations/{dataset}_{split}_{ablation_sizes[ablation_size_index]}.csv"
+            ) as ablation_file:
                 ablation_data = ablation_file.readlines()
-            with open(f"data/{dataset}/ablations/{dataset}_{split}_hg_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            with open(
+                f"data/{dataset}/ablations/{dataset}_{split}_hg_{ablation_sizes[ablation_size_index]}.csv"
+            ) as ablation_file:
                 hf_data = ablation_file.readlines()
             hf_data = hf_data[1:]  # Pop header
             assert set(hf_data) == set(ablation_data), f"failed on {split} {ablation_size_index}"
+
 
 def test_aws_files(dataset):
     ablation_sizes = ablation_sizes_by_dataset[dataset]
     for split in ["train", "val"]:
         for ablation_size_index in range(len(ablation_sizes)):
-            with open(f"data/{dataset}/ablations/{dataset}_{split}_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            with open(
+                f"data/{dataset}/ablations/{dataset}_{split}_{ablation_sizes[ablation_size_index]}.csv"
+            ) as ablation_file:
                 ablation_data = ablation_file.readlines()
-            with open(f"data/{dataset}/ablations/{dataset}_{split}_aws_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            with open(
+                f"data/{dataset}/ablations/{dataset}_{split}_aws_{ablation_sizes[ablation_size_index]}.csv"
+            ) as ablation_file:
                 aws_data = ablation_file.readlines()
             assert set(aws_data) == set(ablation_data), f"failed on {split} {ablation_size_index}"
+
 
 def test_azure_files(dataset):
     ablation_sizes = ablation_sizes_by_dataset[dataset]
     for split in ["train", "val"]:
         for ablation_size_index in range(len(ablation_sizes)):
-            with open(f"data/{dataset}/ablations/{dataset}_{split}_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            with open(
+                f"data/{dataset}/ablations/{dataset}_{split}_{ablation_sizes[ablation_size_index]}.csv"
+            ) as ablation_file:
                 ablation_data = ablation_file.readlines()
-            with open(f"data/{dataset}/ablations/{dataset}_{split}_azure_{ablation_sizes[ablation_size_index]}.csv") as ablation_file:
+            with open(
+                f"data/{dataset}/ablations/{dataset}_{split}_azure_{ablation_sizes[ablation_size_index]}.csv"
+            ) as ablation_file:
                 azure_data = ablation_file.readlines()
             azure_data = azure_data[1:]  # Pop header
             azure_data = [entry.removeprefix("azureml://training_uploads/") for entry in azure_data]

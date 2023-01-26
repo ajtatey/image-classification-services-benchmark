@@ -19,6 +19,7 @@
         "azureml",
         "huggingface",
         "kaggle",
+        "loadmat",
         "nyckel",
         "tqdm",
         "wrapattr",

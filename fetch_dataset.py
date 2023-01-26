@@ -43,11 +43,10 @@ def fetch_from_www(base_path, data_urls: List[str], force_redo_download):
 def fetch_from_kaggle(key: str, target_path: str, force_redo_download: bool):
 
     if not os.path.exists(target_path) or force_redo_download:
-        if not os.path.exists(target_path):
-            os.makedirs(target_path)
+        print("Fetching {key} to {target_path}")
+        os.makedirs(target_path, exist_ok=True)
         api = KaggleApi()
         api.authenticate()
-        print("Fetching {key} to {target_path}")
         api.dataset_download_files(key, path=target_path, unzip=True)
 
 
