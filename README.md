@@ -194,9 +194,10 @@ with your SUBSCRIPTION_ID to create a contributor role. This will give you a cli
 export AZURE_CLIENT_ID=<CLIENT_ID>
 export AZURE_TENANT_ID=<TENANT_ID>
 export AZURE_CLIENT_SECRET=<CLIENT_SECRET>
+export AZURE_SUBSCRIPTION_ID=<SUBSCRIPTION_ID>
 ```
 
-Within `azure_ml.py` add your subscription_id, resource_group, and workspace_name.
+Within `azure_ml.py` add your resource_group, and workspace_name.
 Then you can run:
 
 ```
