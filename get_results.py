@@ -2,6 +2,7 @@ import csv
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import sem
 
 DATASETS = ["beans", "cars", "food", "intel", "pets", "clothing", "xrays"]
 SERVICES = ["vertex", "aws", "hg", "nyckel"]
@@ -28,12 +29,14 @@ def get_accuracies():
 
 def get_combined_accuracies():
     combined_accuracies = np.zeros((len(SERVICES), len(ABLATIONS)))
+    combined_errors = np.zeros((len(SERVICES), len(ABLATIONS)))
 
     for service_count, service in enumerate(SERVICES):
         for ablation_count, ablation in enumerate(ABLATIONS):
             accuracy = 0
             total = 0
-            for dataset in DATASETS:
+            ablation_means = np.zeros(len(DATASETS))
+            for dataset_count, dataset in enumerate(DATASETS):
                 if os.path.exists(f"data/{dataset}/results"):
                     for file in os.listdir(f"data/{dataset}/results"):
                         if service in file and str(ablation) in file:
@@ -43,20 +46,51 @@ def get_combined_accuracies():
                                     if str(row[1]) == str(row[2]):
                                         accuracy += 1
                                     total += 1
+                if total != 0:
+                    ablation_means[dataset_count] = accuracy / total
+                    print(ablation_means)
             if total != 0:
                 combined_accuracies[service_count, ablation_count] = accuracy / total
+                combined_errors[service_count, ablation_count] = sem(ablation_means)
     print(combined_accuracies)
 
-    """_, ax = plt.subplots()
-    ax.errorbar(ABLATIONS, nyckel_means, yerr=nyckel_stds, fmt="o", label="Nyckel")
-    ax.errorbar(ABLATIONS, hg_means, yerr=hg_stds, fmt="o", label="Huggingface")
-    ax.errorbar(ABLATIONS, vertex_means, yerr=vertex_stds, fmt="o", label="Vertex")
+    _, ax = plt.subplots()
+    ax.errorbar(
+        ABLATIONS,
+        combined_accuracies[0],
+        yerr=combined_errors[0],
+        fmt="o",
+        label="Vertex",
+        linestyle="dotted",
+        capsize=6,
+    )
+    ax.errorbar(
+        ABLATIONS, combined_accuracies[1], yerr=combined_errors[1], fmt="o", label="AWS", linestyle="dotted", capsize=6
+    )
+    ax.errorbar(
+        ABLATIONS,
+        combined_accuracies[2],
+        yerr=combined_errors[2],
+        fmt="o",
+        label="Huggingface",
+        linestyle="dotted",
+        capsize=6,
+    )
+    ax.errorbar(
+        ABLATIONS,
+        combined_accuracies[3],
+        yerr=combined_errors[3],
+        fmt="o",
+        label="Nyckel",
+        linestyle="dotted",
+        capsize=6,
+    )
 
     # Show the legend
     ax.legend()
 
     # Show the plot
-    plt.show()"""
+    plt.show()
 
 
 def get_latencies():
