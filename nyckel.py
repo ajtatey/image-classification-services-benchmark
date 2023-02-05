@@ -67,7 +67,18 @@ def invoke(access_token, function_id, ablationSize, dataset):
 
     headers = {'Authorization': f'Bearer {access_token}'}
 
-    results = [[], [], [], []]
+    results = [[], [], [], [], []]
+    if not os.path.exists(f'data/{dataset}/results'):
+        os.makedirs(f'data/{dataset}/results')
+    if os.path.exists(f'data/{dataset}/results/{dataset}-nyckel-results-{str(ablationSize)}.csv'):
+        df = pd.read_csv(
+            f'data/{dataset}/results/{dataset}-nyckel-results-{str(ablationSize)}.csv', header=None)
+        results[0] = df[0].tolist()
+        results[1] = df[1].tolist()
+        results[2] = df[2].tolist()
+        results[3] = df[3].tolist()
+        results[4] = df[4].tolist()
+
     accurate = 0
     total = 0
     with open(f'data/{dataset}/{dataset}_test_nyckel.csv') as csvfile:
@@ -76,29 +87,35 @@ def invoke(access_token, function_id, ablationSize, dataset):
 
         for row in reader:
             print(row[0])
-            with open(f'data/{dataset}/test/{row[1]}/{row[0]}', 'rb') as f:
-                # measure the latency for this request
-                result = requests.post(url, headers=headers, files={'data': f})
-                print(result.json())
-                results[0].append(row[0])
-                results[1].append(result.json()['labelName'])
-                results[2].append(result.json()['confidence'])
-                results[3].append(result.elapsed)
-                # check whether the result.labelName is pneumonia
-                if result.json()['labelName'] == row[1]:
-                    accurate += 1
-                    print('accurate')
-                else:
-                    print('inaccurate')
-                total += 1
+            if row[0] in results[0]:
+                print('already done')
+                continue
+            else:
+                with open(f'data/{dataset}/test/{row[1]}/{row[0]}', 'rb') as f:
+                    # measure the latency for this request
+                    result = requests.post(
+                        url, headers=headers, files={'data': f})
+                    print(result.json())
+                    results[0].append(row[0])
+                    results[1].append(row[1])
+                    results[2].append(result.json()['labelName'])
+                    results[3].append(result.json()['confidence'])
+                    results[4].append(result.elapsed)
+                    # check whether the result.labelName is pneumonia
+                    if result.json()['labelName'] == row[1]:
+                        accurate += 1
+                        print('accurate')
+                    else:
+                        print('inaccurate')
+                    total += 1
 
-            df = pd.DataFrame(results)
-            df = df.transpose()
-            df.to_csv(f'data/{dataset}/{dataset}-nyckel-results-{str(ablationSize)}.csv',
-                      index=False, header=False)
-            print(f'Accuracy: {accurate/total}')
-            print(f'Accurate: {accurate}')
-            print(f'Total: {total}')
+                df = pd.DataFrame(results)
+                df = df.transpose()
+                df.to_csv(f'data/{dataset}/results/{dataset}-nyckel-results-{str(ablationSize)}.csv',
+                          index=False, header=False)
+                print(f'Accuracy: {accurate/total}')
+                print(f'Accurate: {accurate}')
+                print(f'Total: {total}')
 
 
 if __name__ == '__main__':
