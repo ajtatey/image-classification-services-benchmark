@@ -160,3 +160,5 @@ gcreds.json
 *.jpeg
 data/
 classes.txt
+.azureml/config.json
+s3_bucket_policy.json
