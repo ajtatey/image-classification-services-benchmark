@@ -40,9 +40,11 @@ def create_label(access_token, classes, function_id):
     print(result.text)
 
 
-def upload(access_token, function_id, training_file):
+def upload(access_token, function_id, ablationSize, dataset):
 
-    with open('classes.txt') as f:
+    training_file = f'data/{dataset}/ablations/{dataset}_train_nyckel_{ablationSize}.csv'
+
+    with open(f'data/{dataset}/classes.txt') as f:
         classes = f.read().split(',')
     create_label(access_token, classes, function_id)
 
@@ -55,12 +57,12 @@ def upload(access_token, function_id, training_file):
 
         for row in reader:
             print(row[0])
-            with open(f'train/{row[1]}/{row[0]}', 'rb') as f:
+            with open(f'data/{dataset}/train/{row[1]}/{row[0]}', 'rb') as f:
                 result = requests.post(url, headers=headers, files={'data': f}, data={
                     'annotation.labelName': row[1]})
 
 
-def invoke(access_token, function_id, ablationSize):
+def invoke(access_token, function_id, ablationSize, dataset):
     url = f'https://www.nyckel.com/v1/functions/{function_id}/invoke'
 
     headers = {'Authorization': f'Bearer {access_token}'}
@@ -68,13 +70,13 @@ def invoke(access_token, function_id, ablationSize):
     results = [[], [], [], []]
     accurate = 0
     total = 0
-    with open('chest_xray_test.csv') as csvfile:
+    with open(f'data/{dataset}/{dataset}_test_nyckel.csv') as csvfile:
         reader = csv.reader(csvfile)
         # get the class labels from classes.txt
 
         for row in reader:
             print(row[0])
-            with open(f'test/{row[1]}/{row[0]}', 'rb') as f:
+            with open(f'data/{dataset}/test/{row[1]}/{row[0]}', 'rb') as f:
                 # measure the latency for this request
                 result = requests.post(url, headers=headers, files={'data': f})
                 print(result.json())
@@ -92,7 +94,7 @@ def invoke(access_token, function_id, ablationSize):
 
             df = pd.DataFrame(results)
             df = df.transpose()
-            df.to_csv(f'xray-results-{str(ablationSize)}.csv',
+            df.to_csv(f'data/{dataset}/{dataset}-nyckel-results-{str(ablationSize)}.csv',
                       index=False, header=False)
             print(f'Accuracy: {accurate/total}')
             print(f'Accurate: {accurate}')
@@ -105,11 +107,12 @@ if __name__ == '__main__':
         function_name = sys.argv[2]
         create_function(access_token, function_name)
     elif sys.argv[1] == 'upload':
-        function_id = sys.argv[2]
-        ablationSize = sys.argv[3]
-        training_file = f'train_nyckel_{ablationSize}.csv'
-        upload(access_token, function_id, training_file)
+        dataset = sys.argv[2]
+        function_id = sys.argv[3]
+        ablationSize = sys.argv[4]
+        upload(access_token, function_id, ablationSize, dataset)
     elif sys.argv[1] == 'invoke':
-        function_id = sys.argv[2]
-        ablationSize = sys.argv[3]
-        invoke(access_token, function_id, ablationSize)
+        dataset = sys.argv[2]
+        function_id = sys.argv[3]
+        ablationSize = sys.argv[4]
+        invoke(access_token, function_id, ablationSize, dataset)

@@ -1,0 +1,38 @@
+{
+  "beans": {
+    "google_bucket_name": "gs://argot-xrays",
+    "azure_training_uploads": "azureml://training_uploads/",
+    "azure_val_uploads": "azureml://val_uploads/",
+    "azure_test_uploads": "azureml://test_uploads/"
+  },
+  "cars": {
+    "google_bucket_name": "gs://argot-xrays",
+    "azure_training_uploads": "azureml://training_uploads/",
+    "azure_val_uploads": "azureml://val_uploads/",
+    "azure_test_uploads": "azureml://test_uploads/"
+  },
+  "food": {
+    "google_bucket_name": "gs://argot-xrays",
+    "azure_training_uploads": "azureml://training_uploads/",
+    "azure_val_uploads": "azureml://val_uploads/",
+    "azure_test_uploads": "azureml://test_uploads/"
+  },
+  "intel": {
+    "google_bucket_name": "gs://argot-xrays",
+    "azure_training_uploads": "azureml://training_uploads/",
+    "azure_val_uploads": "azureml://val_uploads/",
+    "azure_test_uploads": "azureml://test_uploads/"
+  },
+  "pets": {
+    "google_bucket_name": "gs://argot-xrays",
+    "azure_training_uploads": "azureml://training_uploads/",
+    "azure_val_uploads": "azureml://val_uploads/",
+    "azure_test_uploads": "azureml://test_uploads/"
+  },
+  "xrays": {
+    "google_bucket_name": "gs://argot-xrays",
+    "azure_training_uploads": "azureml://training_uploads/",
+    "azure_val_uploads": "azureml://val_uploads/",
+    "azure_test_uploads": "azureml://test_uploads/"
+  }
+}
