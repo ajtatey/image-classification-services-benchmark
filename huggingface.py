@@ -4,6 +4,7 @@ import pandas as pd
 import sys
 import csv
 import os
+import time
 
 
 def invoke(inference_endpoint, dataset, ablationSize):
@@ -43,8 +44,10 @@ def invoke(inference_endpoint, dataset, ablationSize):
                     response = requests.request("POST", API_URL, headers=headers, data=data, params=options)
 
                     if response.status_code != 200:
-                        print(f"Request failed: {response.content}")
-                        raise Exception("Request failed, please retry")
+                        print(f"Request failed: {response.content.decode('utf-8')}")
+                        print("Retrying in 20 seconds")
+                        time.sleep(20)
+                        response = requests.request("POST", API_URL, headers=headers, data=data, params=options)
 
                     results[0].append(row[0])
                     results[1].append(row[1])
