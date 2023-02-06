@@ -92,7 +92,7 @@ def fetch_dataset(training_set, force_redo_download=False):
             ["http://data.vision.ee.ethz.ch/cvl/food-101.tar.gz"],
             force_redo_download,
         )
-    if training_set == "shopping":
+    if training_set == "clothing":
         pass
 
 

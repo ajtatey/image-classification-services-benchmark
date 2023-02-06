@@ -6,7 +6,7 @@ from create_ablations import create_ablations_main
 from create_tests import create_test_main
 from create_folders import create_folders
 
-DATASETS = ["beans", "cars", "food", "intel", "pets", "xrays"]
+DATASETS = ["beans", "cars", "food", "intel", "pets", "xrays", "clothing"]
 
 
 def build_one(dataset: str, force_redo_download: bool):
