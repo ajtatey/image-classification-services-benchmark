@@ -55,7 +55,7 @@ def upload(access_token, function_id, ablationSize, dataset):
         with open(f"data/{dataset}/train/{label}/{filename}", "rb") as f:
             response = requests.post(url, headers=headers, files={"data": f}, data={"annotation.labelName": label})
             if not response.status_code == 200:
-                print(f"Invalid response {response.text=} {response.status_code=}")
+                print(f"Invalid response {response.text=} {response.status_code=} {filename=} {label=}")
 
     training_file = f"data/{dataset}/ablations/{dataset}_train_nyckel_{ablationSize}.csv"
 
