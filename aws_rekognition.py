@@ -80,7 +80,7 @@ def analyze_local_image(rek_client, model, photo, min_confidence):
         image = Image.open(photo)
         image_type = Image.MIME[image.format]
 
-        if (image_type == "image/jpeg" or image_type == "image/png") == False:
+        if (image_type == "image/jpeg" or image_type == "image/png") is False:
             logger.error("Invalid image type for %s", photo)
             raise ValueError(f"Invalid file format. Supply a jpeg or png format file: {photo}")
 
@@ -161,7 +161,7 @@ if __name__ == "__main__":
         dataset = sys.argv[2]
         ablation = sys.argv[3]
 
-        bucket_name = f"argot-{dataset}-{ablation}-west"
+        bucket_name = f"{dataset}-{ablation}"
         s3 = create_client("s3")
         create_bucket(bucket_name)
 
