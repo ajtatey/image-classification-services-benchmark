@@ -33,28 +33,32 @@ def get_combined_accuracies():
 
     for service_count, service in enumerate(SERVICES):
         for ablation_count, ablation in enumerate(ABLATIONS):
-            accuracy = 0
-            total = 0
             ablation_means = np.zeros(len(DATASETS))
             for dataset_count, dataset in enumerate(DATASETS):
                 if os.path.exists(f"data/{dataset}/results"):
                     for file in os.listdir(f"data/{dataset}/results"):
-                        if service in file and str(ablation) in file:
-                            with open(f"data/{dataset}/results/{file}") as csvfile:
-                                reader = csv.reader(csvfile)
-                                for row in reader:
-                                    if str(row[1]) == str(row[2]):
-                                        accuracy += 1
-                                    total += 1
-                if total != 0:
-                    ablation_means[dataset_count] = accuracy / total
-                    print(ablation_means)
-            if total != 0:
-                combined_accuracies[service_count, ablation_count] = accuracy / total
-                combined_errors[service_count, ablation_count] = sem(ablation_means)
-    print(combined_accuracies)
+                        if file != ".DS_Store":
+                            if service in file and str(ablation) in file:
+                                with open(f"data/{dataset}/results/{file}") as csvfile:
+                                    accuracy = 0
+                                    total = 0
+                                    reader = csv.reader(csvfile)
+                                    for row in reader:
+                                        if str(row[1]) == str(row[2]):
+                                            accuracy += 1
+                                        total += 1
+                                if total != 0:
+                                    print(f"Accuracy for {file}: {accuracy/total}")
+                                    ablation_means[dataset_count] = accuracy / total
+            # print(ablation_means)
+            ablation_means[ablation_means == 0] = np.nan
+            # print(ablation_means)
+            # print(np.nanmean(ablation_means))
+            combined_accuracies[service_count, ablation_count] = np.nanmean(ablation_means)
+            combined_errors[service_count, ablation_count] = sem(ablation_means, nan_policy="omit")
 
     _, ax = plt.subplots()
+    ax.set_xscale("log")
     ax.errorbar(
         ABLATIONS,
         combined_accuracies[0],
