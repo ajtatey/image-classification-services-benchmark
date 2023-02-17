@@ -67,7 +67,7 @@ def create_test_list(dataset, google_bucket_name, azure_test_uploads):
 
 
 def create_test_main(dataset):
-    google_bucket_name, _, _, azure_test_uploads = get_bucket_uris(dataset)
+    google_bucket_name, _, azure_test_uploads = get_bucket_uris(dataset)
     create_test_list(dataset, google_bucket_name, azure_test_uploads)
 
 

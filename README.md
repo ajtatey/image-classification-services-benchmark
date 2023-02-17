@@ -194,9 +194,10 @@ with your SUBSCRIPTION_ID to create a contributor role. This will give you a cli
 export AZURE_CLIENT_ID=<CLIENT_ID>
 export AZURE_TENANT_ID=<TENANT_ID>
 export AZURE_CLIENT_SECRET=<CLIENT_SECRET>
+export AZURE_SUBSCRIPTION_ID=<SUBSCRIPTION_ID>
 ```
 
-Within `azure_ml.py` add your subscription_id, resource_group, and workspace_name.
+Within `azure_ml.py` add your resource_group, and workspace_name.
 Then you can run:
 
 ```
@@ -245,3 +246,16 @@ Once uploaded, go to [Amazon Rekognition Custom Labels](https://us-east-2.consol
 Once the data is imported, select 'Train Model,' then 'Train Model' again on the next page.
 
 Once the model has completed training, choose 'Check Metrics' to find the performance of the model.
+
+## Get Results
+
+To show the accuracies and latencies of each service/ablation/dataset combination run:
+
+```
+get_results.py
+```
+
+This will print out the accuracy and latency for each permuation. It will also produce two plots:
+
+1. a log scale plot of mean accuracy (and SEM) averaged across datasets per ablation for each service.
+2. a boxplot of latencies per service, showing “minimum”, first quartile [Q1], median, third quartile [Q3] and “maximum”, excluding outliers.

@@ -4,6 +4,7 @@ import os
 import random
 import shutil
 import sys
+import jsonlines
 
 
 def get_ablations(dataset):
@@ -64,13 +65,11 @@ def get_bucket_uris(dataset):
     google_bucket_name = config[dataset]["google_bucket_name"]
     azure_training_uploads = config[dataset]["azure_training_uploads"]
     azure_val_uploads = config[dataset]["azure_val_uploads"]
-    azure_test_uploads = config[dataset]["azure_test_uploads"]
 
-    return google_bucket_name, azure_training_uploads, azure_val_uploads, azure_test_uploads
+    return google_bucket_name, azure_training_uploads, azure_val_uploads
 
 
 def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure_training_uploads, azure_val_uploads):
-
     class_list = [[], []]
     train_list = [[], []]
     val_list = [[], []]
@@ -79,8 +78,8 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
         class_list = [[], []]
         vertex_train_list = [[], []]
         vertex_val_list = [[], []]
-        azure_train_list = [["image_url"], ["label"]]
-        azure_val_list = [["image_url"], ["label"]]
+        azure_train_list = []
+        azure_val_list = []
         hg_train_list = [["file"], ["label"]]
         hg_val_list = [["file"], ["label"]]
         nyckel_train_list = [[], []]
@@ -104,8 +103,7 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
         nyckel_train_list[0].extend(train_list[0])
         nyckel_train_list[1].extend(train_list[1])
         for file_name, file_class in zip(train_list[0], train_list[1]):
-            azure_train_list[0].append(f"{azure_training_uploads}{file_name}")
-            azure_train_list[1].append(file_class)
+            azure_train_list.append({"image_url": azure_training_uploads + file_name, "label": file_class})
         aws_train_list[0].extend(train_list[0])
         aws_train_list[1].extend(train_list[1])
 
@@ -119,8 +117,8 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
         nyckel_train_list[0].extend(val_list[0])
         nyckel_train_list[1].extend(val_list[1])
         for file_name, file_class in zip(val_list[0], val_list[1]):
-            azure_val_list[0].append(f"{azure_val_uploads}{file_name}")
-            azure_val_list[1].append(file_class)
+            azure_val_list.append({"image_url": azure_val_uploads + file_name, "label": file_class})
+
         aws_val_list[0].extend(val_list[0])
         aws_val_list[1].extend(val_list[1])
 
@@ -139,9 +137,8 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
     with open(f"data/{dataset}/ablations/{dataset}_train_nyckel_{ablations[0]}.csv", "w") as f:
         a = csv.writer(f, delimiter=",")
         a.writerows(zip(*nyckel_train_list))
-    with open(f"data/{dataset}/ablations/{dataset}_train_azure_{ablations[0]}.csv", "w") as f:
-        a = csv.writer(f, delimiter=",")
-        a.writerows(zip(*azure_train_list))
+    with jsonlines.open(f"data/{dataset}/ablations/{dataset}_train_azure_{ablations[0]}.jsonl", "w") as writer:
+        writer.write_all(azure_train_list)
     with open(f"data/{dataset}/ablations/{dataset}_train_aws_{ablations[0]}.csv", "w") as f:
         a = csv.writer(f, delimiter=",")
         a.writerows(zip(*aws_train_list))
@@ -154,9 +151,8 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
     with open(f"data/{dataset}/ablations/{dataset}_val_hg_{ablations[0]}.csv", "w") as f:
         a = csv.writer(f, delimiter=",")
         a.writerows(zip(*hg_val_list))
-    with open(f"data/{dataset}/ablations/{dataset}_val_azure_{ablations[0]}.csv", "w") as f:
-        a = csv.writer(f, delimiter=",")
-        a.writerows(zip(*azure_val_list))
+    with jsonlines.open(f"data/{dataset}/ablations/{dataset}_val_azure_{ablations[0]}.jsonl", "w") as writer:
+        writer.write_all(azure_val_list)
     with open(f"data/{dataset}/ablations/{dataset}_val_aws_{ablations[0]}.csv", "w") as f:
         a = csv.writer(f, delimiter=",")
         a.writerows(zip(*aws_val_list))
@@ -180,7 +176,7 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
         vertex_list = [[], []]
         hg_train_list = [["file"], ["label"]]
         nyckel_train_list = [[], []]
-        azure_train_list = [["image_url"], ["label"]]
+        azure_train_list = []
         aws_train_list = [[], []]
 
         for cls in classes:
@@ -199,8 +195,8 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
         nyckel_train_list[0].extend(train_list[0])
         nyckel_train_list[1].extend(train_list[1])
         for file_name, file_class in zip(train_list[0], train_list[1]):
-            azure_train_list[0].append(f"{azure_training_uploads}{file_name}")
-            azure_train_list[1].append(file_class)
+            azure_train_list.append({"image_url": azure_training_uploads + file_name, "label": file_class})
+
         aws_train_list[0].extend(train_list[0])
         aws_train_list[1].extend(train_list[1])
 
@@ -213,9 +209,8 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
         with open(f"data/{dataset}/ablations/{dataset}_train_hg_{ablation}.csv", "w") as f:
             a = csv.writer(f, delimiter=",")
             a.writerows(zip(*hg_train_list))
-        with open(f"data/{dataset}/ablations/{dataset}_train_azure_{ablation}.csv", "w") as f:
-            a = csv.writer(f, delimiter=",")
-            a.writerows(zip(*azure_train_list))
+        with jsonlines.open(f"data/{dataset}/ablations/{dataset}_train_azure_{ablation}.jsonl", "w") as writer:
+            writer.write_all(azure_train_list)
         with open(f"data/{dataset}/ablations/{dataset}_train_aws_{ablation}.csv", "w") as f:
             a = csv.writer(f, delimiter=",")
             a.writerows(zip(*aws_train_list))
@@ -223,7 +218,7 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
         temp_val_list = [[], []]
         vertex_list = [[], []]
         hg_val_list = [["file"], ["label"]]
-        azure_val_list = [["image_url"], ["label"]]
+        azure_val_list = []
         aws_val_list = [[], []]
         for cls in classes:
             ablation_count = 0
@@ -241,8 +236,8 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
         nyckel_train_list[0].extend(val_list[0])
         nyckel_train_list[1].extend(val_list[1])
         for file_name, file_class in zip(val_list[0], val_list[1]):
-            azure_val_list[0].append(f"{azure_val_uploads}{file_name}")
-            azure_val_list[1].append(file_class)
+            azure_val_list.append({"image_url": azure_val_uploads + file_name, "label": file_class})
+
         aws_val_list[0].extend(val_list[0])
         aws_val_list[1].extend(val_list[1])
 
@@ -258,9 +253,8 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
         with open(f"data/{dataset}/ablations/{dataset}_train_nyckel_{ablation}.csv", "w") as f:
             a = csv.writer(f, delimiter=",")
             a.writerows(zip(*nyckel_train_list))
-        with open(f"data/{dataset}/ablations/{dataset}_val_azure_{ablation}.csv", "w") as f:
-            a = csv.writer(f, delimiter=",")
-            a.writerows(zip(*azure_val_list))
+        with jsonlines.open(f"data/{dataset}/ablations/{dataset}_val_azure_{ablation}.jsonl", "w") as writer:
+            writer.write_all(azure_val_list)
         with open(f"data/{dataset}/ablations/{dataset}_val_aws_{ablation}.csv", "w") as f:
             a = csv.writer(f, delimiter=",")
             a.writerows(zip(*aws_val_list))
@@ -269,7 +263,7 @@ def create_ablation_files(dataset, classes, ablations, google_bucket_name, azure
 def create_ablations_main(dataset: str):
     ablations = get_ablations(dataset)
     classes = create_main_training_list(dataset)
-    google_bucket_name, azure_training_uploads, azure_val_uploads, _ = get_bucket_uris(dataset)
+    google_bucket_name, azure_training_uploads, azure_val_uploads = get_bucket_uris(dataset)
     create_ablation_files(dataset, classes, ablations, google_bucket_name, azure_training_uploads, azure_val_uploads)
     return ablations
 
