@@ -1,11 +1,11 @@
 import csv
 import os
 import sys
-
 import pandas as pd
 import requests
 from tqdm import tqdm
 from joblib import Parallel, delayed
+import threading
 
 
 def get_token():
@@ -135,6 +135,72 @@ def invoke(access_token, function_id, ablationSize, dataset):
                 print(f"Total: {total}")
 
 
+def parallel_invoke(access_token, function_id, ablationSize, dataset):
+
+    url = f"https://www.nyckel.com/v1/functions/{function_id}/invoke"
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    with open(f"data/{dataset}/{dataset}_test_nyckel.csv") as csvfile:
+        reader = csv.reader(csvfile)
+        # get the class labels from classes.txt
+        count = 0
+        image_array = []
+        for row in reader:
+            print(row[0])
+            f = open(f"data/{dataset}/test/{row[1]}/{row[0]}", "rb")
+            image_array.append(f)
+            count += 1
+            if count == 10:
+                break
+  
+    def _parallel_invoke(image_array):
+        for f in image_array:
+            response = requests.post(url, headers=headers, files={"data": f})
+            print(response.json())
+
+    start = time.time()
+    Parallel(n_jobs=10, prefer="threads")(
+        delayed(_parallel_invoke)(image_array)
+        for f in image_array
+    )
+    end = time.time()
+    print(f"Time to 10 invokes {dataset}-{ablationSize}: {end - start}")
+
+
+def threaded_invoke(access_token, function_id, ablationSize, dataset):
+
+    start = time.time()
+    url = f"https://www.nyckel.com/v1/functions/{function_id}/invoke"
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    with open(f"data/{dataset}/{dataset}_test_nyckel.csv") as csvfile:
+        reader = csv.reader(csvfile)
+        # get the class labels from classes.txt
+        count = 0
+        image_array = []
+        for row in reader:
+            print(row[0])
+            f = open(f"data/{dataset}/test/{row[1]}/{row[0]}", "rb")
+            image_array.append(f)
+            count += 1
+            if count == 10:
+                break
+
+    def _fetch_url(f):
+        response = requests.post(url, headers=headers, files={"data": f})
+        print(response.json())
+        print(time.time() - start)
+
+    threads = [threading.Thread(target=_fetch_url, args=(f,)) for f in image_array]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    print(f"Elapsed Time: {time.time() - start}")
+
 if __name__ == "__main__":
     access_token = get_token()
     if sys.argv[1] == "create":
@@ -150,3 +216,13 @@ if __name__ == "__main__":
         function_id = sys.argv[3]
         ablationSize = sys.argv[4]
         invoke(access_token, function_id, ablationSize, dataset)
+    elif sys.argv[1] == "parallel":
+        dataset = sys.argv[2]
+        function_id = sys.argv[3]
+        ablationSize = sys.argv[4]
+        parallel_invoke(access_token, function_id, ablationSize, dataset)
+    elif sys.argv[1] == "threaded":
+        dataset = sys.argv[2]
+        function_id = sys.argv[3]
+        ablationSize = sys.argv[4]
+        threaded_invoke(access_token, function_id, ablationSize, dataset)
