@@ -16,13 +16,7 @@
     "editor.folding": true,
     "python.linting.lintOnSave": true,
     "cSpell.words": [
-        "azureml",
-        "huggingface",
-        "kaggle",
-        "loadmat",
-        "nyckel",
-        "tqdm",
-        "wrapattr",
-        "xrays"
+        "matplotlib",
+        "seaborn"
     ]
 }
