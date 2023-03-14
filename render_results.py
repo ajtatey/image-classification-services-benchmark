@@ -62,6 +62,8 @@ services = list(color_by_service.keys())
 
 datasets = ["clothing", "food", "pets", "intel", "beans", "cars", "xrays"]
 
+services_legend = {"nyckel": "Nyckel", "vertex": "Google", "aws": "AWS", "huggingface": "Huggingface"}
+
 
 def load_data(data_file_path: str):
     with open(data_file_path) as f:
@@ -344,6 +346,56 @@ def render_traintime_by_dataset_as_barplot(data):
     plt.savefig("result_plots/traintime_by_dataset_as_barplot.png")
 
 
+def render_mean_traintime_vs_mean_accuracy(data):
+    def mean_acc_by_service(service: str):
+        accs = []
+        for dataset in data[service]:
+            accs.append(data[service][dataset]["accuracy"][-1])
+        return sum(accs) / len(accs)
+
+    def mean_traintime_by_service(service: str):
+        traintimes = []
+        for dataset in data[service]:
+            traintimes.append(data[service][dataset]["train_time"][-1])
+        return sum(traintimes) / len(traintimes)
+
+    def std_acc_by_service(service: str):
+        accs = []
+        for dataset in data[service]:
+            accs.append(data[service][dataset]["accuracy"][-1])
+        return np.std(accs) / np.sqrt(len(accs))
+
+    def std_traintime_by_service(service: str):
+        traintimes = []
+        for dataset in data[service]:
+            traintimes.append(data[service][dataset]["train_time"][-1])
+        return np.std(traintimes) / np.sqrt(len(traintimes))
+
+    fig, ax = plt.subplots(1, 1, figsize=(8, 4))
+    ax.set_xscale("log")
+    for service in services:
+        ax.errorbar(
+            mean_traintime_by_service(service),
+            mean_acc_by_service(service),
+            yerr=std_acc_by_service(service),
+            xerr=std_traintime_by_service(service),
+            marker="o",
+            label=services_legend[service],
+            markersize=12,
+            color=color_by_service[service],
+        )
+        print(service, mean_traintime_by_service(service))
+        print(service, mean_acc_by_service(service))
+
+    ax.legend(facecolor="white")
+    ax.set_xlabel("Training time (s)")
+    _ = ax.set_ylabel("Accuracy (%)")
+    ax.grid(which="minor", color="dimgrey", alpha=0.1)
+    ax.grid(which="major", color="dimgrey", alpha=0.3)
+    fig.tight_layout()
+    fig.savefig("result_plots/mean_traintime_vs_mean_accuracy.png")
+
+
 def main(data_file_path: str = "image-classification-benchmark-data.csv"):
     if not os.path.exists("result_plots"):
         os.makedirs("result_plots")
@@ -355,6 +407,7 @@ def main(data_file_path: str = "image-classification-benchmark-data.csv"):
     render_mean_accuracy_by_ablation_as_barplot(data)
     render_accuracy_by_dataset_as_barplot(data)
     render_traintime_by_dataset_as_barplot(data)
+    render_mean_traintime_vs_mean_accuracy(data)
 
 
 if __name__ == "__main__":
