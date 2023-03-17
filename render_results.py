@@ -16,11 +16,14 @@ CB91_Purple = "#9D2EC5"
 CB91_Violet = "#661D98"
 CB91_Amber = "#F5B14C"
 
-color_list = [CB91_Blue, CB91_Pink, CB91_Green, CB91_Amber, CB91_Purple, CB91_Violet]
+# These colors are picked from the previous benchmark post
+# https://www.nyckel.com/blog/automl-benchmark-nyckel-google-huggingface/
+nyckel_blue = "#4c72b0"
+google_orange = "#dd8452"
+huggingface_green = "#55a868"
 
 
 def configure_matplotlib():
-    plt.rcParams["axes.prop_cycle"] = plt.cycler(color=color_list)
     plt.rcParams.update({"font.size": 14})
 
     sns.set(
@@ -50,7 +53,14 @@ def configure_matplotlib():
     )
 
 
-color_by_service = {"nyckel": CB91_Blue, "vertex": CB91_Pink, "aws": CB91_Green, "huggingface": CB91_Amber}
+color_by_service = {
+    "nyckel": nyckel_blue,
+    "vertex": google_orange,
+    "huggingface": huggingface_green,
+    "aws": CB91_Pink,
+}
+
+services_in_order = ["nyckel", "vertex", "huggingface", "aws"]
 
 symbols_by_dataset = {"cars": "P", "food": "X", "pets": "v", "intel": "o", "beans": "^", "clothing": "s", "xrays": "^"}
 
@@ -62,7 +72,7 @@ services = list(color_by_service.keys())
 
 datasets = ["clothing", "food", "pets", "intel", "beans", "cars", "xrays"]
 
-services_legend = {"nyckel": "Nyckel", "vertex": "Google", "aws": "AWS", "huggingface": "Huggingface"}
+pretty_name_by_service = {"nyckel": "Nyckel", "vertex": "Google", "aws": "AWS", "huggingface": "Huggingface"}
 
 
 def load_data(data_file_path: str):
@@ -84,9 +94,9 @@ def load_data(data_file_path: str):
 
 
 def render_accuracy_vs_traintime_as_lines(data):
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-    ax.set_xscale("log")
-    for service in data:
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+
+    for service in services_in_order:
         for ditt, dataset in enumerate(data[service]):
             if ditt == 1:
                 ax.plot(
@@ -94,7 +104,7 @@ def render_accuracy_vs_traintime_as_lines(data):
                     data[service][dataset]["accuracy"],
                     ".-",
                     color=color_by_service[service],
-                    label=service,
+                    label=pretty_name_by_service[service],
                 )
             else:
                 ax.plot(
@@ -105,20 +115,23 @@ def render_accuracy_vs_traintime_as_lines(data):
                 )
 
     ax.legend()
+    ax.set_xscale("log")
     ax.set_xlabel("Training time (s)")
     _ = ax.set_ylabel("Accuracy (%)")
+    ax.set_title("Accuracy vs. Traintime", fontsize=18)
 
     fig.tight_layout()
-    fig.savefig("result_plots/accuracy_vs_traintime_as_lines.png")
+    fig.savefig(f"result_plots/accuracy_vs_traintime_as_lines.png")
+    fig.savefig(f"result_plots/accuracy_vs_traintime_as_lines.svg")
 
 
 def render_accuracy_vs_traintime_as_symbols(data):
 
-    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-    ax.set_xscale("log")
-    for service in data:
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+
+    for service in services_in_order:
         for dataset in data[service]:
-            label = f"{dataset} - {service}"
+            label = f"{dataset} - {pretty_name_by_service[service]}"
             ax.plot(
                 data[service][dataset]["train_time"][1],
                 data[service][dataset]["accuracy"][1],
@@ -128,6 +141,7 @@ def render_accuracy_vs_traintime_as_symbols(data):
                 label=label,
             )
 
+    ax.set_xscale("log")
     ax.grid(which="minor", color="dimgrey", alpha=0.1)
     ax.grid(which="major", color="dimgrey", alpha=0.3)
     ax.legend(prop={"size": 8}, loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.35))
@@ -135,15 +149,16 @@ def render_accuracy_vs_traintime_as_symbols(data):
     _ = ax.set_ylabel("Accuracy (%)")
     fig.tight_layout()
     fig.savefig("result_plots/accuracy_vs_traintime_as_symbols.png")
+    fig.savefig("result_plots/accuracy_vs_traintime_as_symbols.svg")
 
 
 def render_runtime_vs_ablation_as_lines(data):
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-    ax.set_yscale("log")
-    for service in data:
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+
+    for service in services_in_order:
         for ditt, dataset in enumerate(data[service]):
             if ditt == 0:
-                label = service
+                label = pretty_name_by_service[service]
             else:
                 label = None
             ax.plot(
@@ -154,11 +169,16 @@ def render_runtime_vs_ablation_as_lines(data):
                 label=label,
             )
 
+    ax.set_title("Traintime by Amount of Data", fontsize=18)
     ax.legend()
+    ax.set_yscale("log")
+    ax.grid(which="minor", color="dimgrey", alpha=0.1)
+    ax.grid(which="major", color="dimgrey", alpha=0.3)
     ax.set_xlabel("Training samples (count)")
     _ = ax.set_ylabel("Training time (s)")
     fig.tight_layout()
     fig.savefig("result_plots/runtime_vs_ablation_as_lines.png")
+    fig.savefig("result_plots/runtime_vs_ablation_as_lines.svg")
 
 
 def render_mean_accuracy_by_ablation_as_barplot(data):
@@ -213,9 +233,9 @@ def render_mean_accuracy_by_ablation_as_barplot(data):
             color=color_by_service[service],
         )
 
-    plt.xlabel("Train sample per class")
+    plt.xlabel("Nbr. train sample per class")
     plt.ylabel("Accuracy (%)")
-    plt.title("Mean accurcy by ablation size")
+    plt.title("Mean accuracy by ablation size", fontsize=18)
 
     plt.ylim([50, 100])
 
@@ -223,7 +243,8 @@ def render_mean_accuracy_by_ablation_as_barplot(data):
 
     plt.legend(loc="best")
     plt.tight_layout()
-    plt.savefig("result_plots/render_mean_accuracy_by_ablation_as_barplot.png")
+    plt.savefig("result_plots/mean_accuracy_by_ablation_as_barplot.png")
+    plt.savefig("result_plots/mean_accuracy_by_ablation_as_barplot.svg")
 
 
 def render_accuracy_by_dataset_as_barplot(data, ablation_index):
@@ -255,7 +276,7 @@ def render_accuracy_by_dataset_as_barplot(data, ablation_index):
 
     plt.xlabel("Dataset")
     plt.ylabel("Accuracy (%)")
-    plt.title("Accuracy by dataset & service")
+    plt.title("Accuracy by dataset & service", fontsize=18)
 
     plt.ylim([25, 100])
 
@@ -264,6 +285,7 @@ def render_accuracy_by_dataset_as_barplot(data, ablation_index):
     plt.legend(loc="best")
     plt.tight_layout()
     plt.savefig(f"result_plots/accuracy_by_ablation_as_barplot_{ablation_index=}.png")
+    plt.savefig(f"result_plots/accuracy_by_ablation_as_barplot_{ablation_index=}.svg")
 
 
 def render_accuracy_by_dataset_as_barplot(data):
@@ -295,7 +317,7 @@ def render_accuracy_by_dataset_as_barplot(data):
 
     plt.xlabel("Dataset")
     plt.ylabel("Accuracy (%)")
-    plt.title("Accuracy by dataset & service")
+    plt.title("Accuracy by dataset & service", fontsize=18)
 
     plt.ylim([25, 100])
 
@@ -304,6 +326,7 @@ def render_accuracy_by_dataset_as_barplot(data):
     plt.legend(loc="best")
     plt.tight_layout()
     plt.savefig("result_plots/accuracy_by_dataset_as_barplot.png")
+    plt.savefig("result_plots/accuracy_by_dataset_as_barplot.svg")
 
 
 def render_traintime_by_dataset_as_barplot(data):
@@ -335,7 +358,7 @@ def render_traintime_by_dataset_as_barplot(data):
 
     plt.xlabel("Dataset")
     plt.ylabel("Traintime (s)")
-    plt.title("Traintime by dataset & service")
+    plt.title("Traintime by dataset & service", fontsize=18)
 
     plt.yscale("log")
 
@@ -344,6 +367,7 @@ def render_traintime_by_dataset_as_barplot(data):
     plt.legend(loc="best")
     plt.tight_layout()
     plt.savefig("result_plots/traintime_by_dataset_as_barplot.png")
+    plt.savefig("result_plots/traintime_by_dataset_as_barplot.svg")
 
 
 def render_mean_traintime_vs_mean_accuracy(data):
@@ -372,7 +396,7 @@ def render_mean_traintime_vs_mean_accuracy(data):
         return np.std(traintimes) / np.sqrt(len(traintimes))
 
     fig, ax = plt.subplots(1, 1, figsize=(8, 4))
-    ax.set_xscale("log")
+
     for service in services:
         ax.errorbar(
             mean_traintime_by_service(service),
@@ -380,20 +404,31 @@ def render_mean_traintime_vs_mean_accuracy(data):
             yerr=std_acc_by_service(service),
             xerr=std_traintime_by_service(service),
             marker="o",
-            label=services_legend[service],
+            label=pretty_name_by_service[service],
             markersize=12,
             color=color_by_service[service],
         )
         print(service, mean_traintime_by_service(service))
         print(service, mean_acc_by_service(service))
 
+    ax.set_title("Accuracy vs. Traintime")
+    ax.set_xscale("log")
     ax.legend(facecolor="white")
     ax.set_xlabel("Training time (s)")
     _ = ax.set_ylabel("Accuracy (%)")
     ax.grid(which="minor", color="dimgrey", alpha=0.1)
     ax.grid(which="major", color="dimgrey", alpha=0.3)
     fig.tight_layout()
-    fig.savefig("result_plots/mean_traintime_vs_mean_accuracy.png")
+    fig.savefig(f"result_plots/mean_traintime_vs_mean_accuracy.png")
+    fig.savefig(f"result_plots/mean_traintime_vs_mean_accuracy.svg")
+
+
+def render_selected(data):
+    render_runtime_vs_ablation_as_lines(data)
+    render_mean_accuracy_by_ablation_as_barplot(data)
+    render_accuracy_by_dataset_as_barplot(data)
+    render_traintime_by_dataset_as_barplot(data)
+    render_mean_traintime_vs_mean_accuracy(data)
 
 
 def main(data_file_path: str = "image-classification-benchmark-data.csv"):
@@ -401,13 +436,7 @@ def main(data_file_path: str = "image-classification-benchmark-data.csv"):
         os.makedirs("result_plots")
     configure_matplotlib()
     data = load_data(data_file_path)
-    render_accuracy_vs_traintime_as_lines(data)
-    render_accuracy_vs_traintime_as_symbols(data)
-    render_runtime_vs_ablation_as_lines(data)
-    render_mean_accuracy_by_ablation_as_barplot(data)
-    render_accuracy_by_dataset_as_barplot(data)
-    render_traintime_by_dataset_as_barplot(data)
-    render_mean_traintime_vs_mean_accuracy(data)
+    render_selected(data)
 
 
 if __name__ == "__main__":
