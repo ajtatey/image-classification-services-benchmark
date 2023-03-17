@@ -228,15 +228,16 @@ def render_mean_accuracy_by_ablation_as_barplot(data):
             ind + offset,
             barplot_data[service]["mean"],
             width,
-            label=service,
+            label=pretty_name_by_service[service],
             yerr=barplot_data[service]["std"],
             color=color_by_service[service],
         )
 
+    plt.title("Accuracy by ablation size", fontsize=18)
     plt.xlabel("Nbr. train sample per class")
     plt.ylabel("Accuracy (%)")
-    plt.title("Mean accuracy by ablation size", fontsize=18)
-
+    plt.grid(which="minor", color="dimgrey", alpha=0.1)
+    plt.grid(which="major", color="dimgrey", alpha=0.3)
     plt.ylim([50, 100])
 
     plt.xticks(ind, ablations)
@@ -245,47 +246,6 @@ def render_mean_accuracy_by_ablation_as_barplot(data):
     plt.tight_layout()
     plt.savefig("result_plots/mean_accuracy_by_ablation_as_barplot.png")
     plt.savefig("result_plots/mean_accuracy_by_ablation_as_barplot.svg")
-
-
-def render_accuracy_by_dataset_as_barplot(data, ablation_index):
-    barplot_data = {}
-    for service in services:
-        barplot_data[service] = [data[service][dataset]["accuracy"][ablation_index] for dataset in datasets]
-
-    N = len(datasets)
-
-    # Position of bars on x-axis
-    ind = np.arange(N)
-
-    # Figure size
-    plt.figure(figsize=(10, 5))
-
-    # Width of a bar
-    width = 0.2
-
-    # Plotting
-    offsets = [-1.5 * width, -0.5 * width, 0.5 * width, 1.5 * width]
-    for service, offset in zip(services, offsets):
-        plt.bar(
-            ind + offset,
-            barplot_data[service],
-            width,
-            label=service,
-            color=color_by_service[service],
-        )
-
-    plt.xlabel("Dataset")
-    plt.ylabel("Accuracy (%)")
-    plt.title("Accuracy by dataset & service", fontsize=18)
-
-    plt.ylim([25, 100])
-
-    plt.xticks(ind, datasets)
-
-    plt.legend(loc="best")
-    plt.tight_layout()
-    plt.savefig(f"result_plots/accuracy_by_ablation_as_barplot_{ablation_index=}.png")
-    plt.savefig(f"result_plots/accuracy_by_ablation_as_barplot_{ablation_index=}.svg")
 
 
 def render_accuracy_by_dataset_as_barplot(data):
@@ -311,14 +271,15 @@ def render_accuracy_by_dataset_as_barplot(data):
             ind + offset,
             barplot_data[service],
             width,
-            label=service,
+            label=pretty_name_by_service[service],
             color=color_by_service[service],
         )
 
+    plt.title("Accuracy by dataset & service", fontsize=18)
     plt.xlabel("Dataset")
     plt.ylabel("Accuracy (%)")
-    plt.title("Accuracy by dataset & service", fontsize=18)
-
+    plt.grid(which="minor", color="dimgrey", alpha=0.1)
+    plt.grid(which="major", color="dimgrey", alpha=0.3)
     plt.ylim([25, 100])
 
     plt.xticks(ind, datasets)
@@ -352,18 +313,19 @@ def render_traintime_by_dataset_as_barplot(data):
             ind + offset,
             barplot_data[service],
             width,
-            label=service,
+            label=pretty_name_by_service[service],
             color=color_by_service[service],
         )
 
+    plt.title("Traintime by dataset & service", fontsize=18)
     plt.xlabel("Dataset")
     plt.ylabel("Traintime (s)")
-    plt.title("Traintime by dataset & service", fontsize=18)
 
     plt.yscale("log")
 
     plt.xticks(ind, datasets)
-
+    plt.grid(which="minor", color="dimgrey", alpha=0.1)
+    plt.grid(which="major", color="dimgrey", alpha=0.3)
     plt.legend(loc="best")
     plt.tight_layout()
     plt.savefig("result_plots/traintime_by_dataset_as_barplot.png")
