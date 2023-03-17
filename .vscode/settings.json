@@ -17,6 +17,7 @@
     "python.linting.lintOnSave": true,
     "cSpell.words": [
         "matplotlib",
-        "seaborn"
+        "seaborn",
+        "Traintime"
     ]
 }
