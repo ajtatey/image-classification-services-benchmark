@@ -10,7 +10,6 @@ from tqdm import tqdm
 
 
 def invoke(inference_endpoint, dataset, ablationSize):
-    # API_URL = f"https://api-inference.huggingface.co/models/{inference_endpoint}"
     API_URL = inference_endpoint
     access_token = os.getenv("HG_ACCESS_TOKEN")
     headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "image/jpeg"}
