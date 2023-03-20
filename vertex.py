@@ -6,6 +6,8 @@ import time
 import pandas as pd
 from create_tests import get_bucket_uris
 import base64
+from joblib import Parallel, delayed
+
 
 from google.cloud.aiplatform.gapic.schema import predict
 from google.oauth2 import service_account
@@ -158,6 +160,43 @@ def invoke(dataset, ablationSize, project_id, endpoint_id):
                     header=False,
                 )
 
+def parallel_invoke(dataset, ablationSize, project_id, endpoint_id):
+    
+
+    filenames = []
+    labels = []
+    with open(f"data/{dataset}/{dataset}_test_vertex.csv") as csvfile:
+        reader = csv.reader(csvfile)
+        # get the class labels from classes.txt
+        count = 0
+        for row in reader:
+            filenames.append(row[0].split("/")[-1])
+            labels.append(row[1])
+            count += 1
+            if count == 1000:
+                break
+
+    def _parallel_invoke(filename: str, label: str, project_id: str, endpoint_id: str):
+
+        displayNames, confidences, latency = predict_image_classification_sample(
+                        project=project_id,
+                        endpoint_id=endpoint_id,
+                        location="us-central1",
+                        filename=f"data/{dataset}/test/{label}/{filename}",
+                    )
+
+    start = time.time()
+    Parallel(n_jobs=10, prefer="threads")(
+        delayed(_parallel_invoke)(filename, label, project_id, endpoint_id)
+        for filename, label in zip(filenames, labels)
+    )
+    end = time.time()
+    print(f"Time to 1000 invokes {dataset}-{ablationSize}: {end - start}")
+                    # measure the latency for this request
+
+                    
+                    
+
 
 if __name__ == "__main__":
     if sys.argv[1] == "upload":
@@ -168,8 +207,12 @@ if __name__ == "__main__":
     elif sys.argv[1] == "invoke":
         dataset = sys.argv[2]
         ablation = sys.argv[3]
-        # project_id = "492239671883",
-        # endpoint_id = "1294560592496951296",
         project_id = sys.argv[4]
         endpoint_id = sys.argv[5]
         invoke(dataset, ablation, project_id, endpoint_id)
+    elif sys.argv[1] == "parallel":
+        dataset = sys.argv[2]
+        ablation = sys.argv[3]
+        project_id = sys.argv[4]
+        endpoint_id = sys.argv[5]
+        parallel_invoke(dataset, ablation, project_id, endpoint_id)

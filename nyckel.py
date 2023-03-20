@@ -6,6 +6,7 @@ import requests
 from tqdm import tqdm
 from joblib import Parallel, delayed
 import threading
+import time
 
 
 def get_token():
@@ -77,6 +78,18 @@ def upload(access_token, function_id, ablationSize, dataset):
         for filename, label in tqdm(zip(filenames, labels), total=len(labels))
     )
 
+    url = f"https://www.nyckel.com/v1/functions/{function_id}/invoke"
+
+    status_code = 0
+    with open(f"data/{dataset}/test/NORMAL/IM-0001-0001.jpeg", "rb") as f:
+        start = time.time()
+        while status_code != 200:
+            result = requests.post(url, headers=headers, files={"data": f})
+            print(result.json())
+            status_code = result.status_code
+    end = time.time()
+    print(f"Latency: {end - start}")
+
 
 def invoke(access_token, function_id, ablationSize, dataset):
     url = f"https://www.nyckel.com/v1/functions/{function_id}/invoke"
@@ -141,65 +154,36 @@ def parallel_invoke(access_token, function_id, ablationSize, dataset):
 
     headers = {"Authorization": f"Bearer {access_token}"}
 
+    filenames = []
+    labels = []
     with open(f"data/{dataset}/{dataset}_test_nyckel.csv") as csvfile:
         reader = csv.reader(csvfile)
         # get the class labels from classes.txt
         count = 0
-        image_array = []
         for row in reader:
-            print(row[0])
-            f = open(f"data/{dataset}/test/{row[1]}/{row[0]}", "rb")
-            image_array.append(f)
+            filenames.append(row[0])
+            labels.append(row[1])
             count += 1
-            if count == 10:
+            if count == 1000:
                 break
-  
-    def _parallel_invoke(image_array):
-        for f in image_array:
+
+    def _parallel_invoke(filename: str, label: str):
+
+        with open(f"data/{dataset}/test/{label}/{filename}", "rb") as f:
             response = requests.post(url, headers=headers, files={"data": f})
-            print(response.json())
+            if not response.status_code == 200:
+                print(f"Invalid response {response.text=} {response.status_code=} {filename=} {label=}")
 
     start = time.time()
     Parallel(n_jobs=10, prefer="threads")(
-        delayed(_parallel_invoke)(image_array)
-        for f in image_array
+        delayed(_parallel_invoke)(filename, label)
+        for filename, label in tqdm(zip(filenames, labels), total=len(labels))
     )
     end = time.time()
-    print(f"Time to 10 invokes {dataset}-{ablationSize}: {end - start}")
+    print(f"Time to 1000 invokes {dataset}-{ablationSize}: {end - start}")
 
 
-def threaded_invoke(access_token, function_id, ablationSize, dataset):
 
-    start = time.time()
-    url = f"https://www.nyckel.com/v1/functions/{function_id}/invoke"
-
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    with open(f"data/{dataset}/{dataset}_test_nyckel.csv") as csvfile:
-        reader = csv.reader(csvfile)
-        # get the class labels from classes.txt
-        count = 0
-        image_array = []
-        for row in reader:
-            print(row[0])
-            f = open(f"data/{dataset}/test/{row[1]}/{row[0]}", "rb")
-            image_array.append(f)
-            count += 1
-            if count == 10:
-                break
-
-    def _fetch_url(f):
-        response = requests.post(url, headers=headers, files={"data": f})
-        print(response.json())
-        print(time.time() - start)
-
-    threads = [threading.Thread(target=_fetch_url, args=(f,)) for f in image_array]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
-
-    print(f"Elapsed Time: {time.time() - start}")
 
 if __name__ == "__main__":
     access_token = get_token()
@@ -221,8 +205,4 @@ if __name__ == "__main__":
         function_id = sys.argv[3]
         ablationSize = sys.argv[4]
         parallel_invoke(access_token, function_id, ablationSize, dataset)
-    elif sys.argv[1] == "threaded":
-        dataset = sys.argv[2]
-        function_id = sys.argv[3]
-        ablationSize = sys.argv[4]
-        threaded_invoke(access_token, function_id, ablationSize, dataset)
+    
