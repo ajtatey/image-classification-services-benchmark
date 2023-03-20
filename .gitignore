@@ -154,6 +154,9 @@ cython_debug/
 .csv
 .json
 *.csv
+!image-classification-benchmark-data.csv
+!image-classification-benchmark-throughputs.csv
+!image-classification-benchmark-usability.csv
 *.jpeg
 gcreds.json
 *.jpeg
