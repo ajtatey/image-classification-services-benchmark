@@ -160,9 +160,8 @@ def invoke(dataset, ablationSize, project_id, endpoint_id):
                     header=False,
                 )
 
-def parallel_invoke(dataset, ablationSize, project_id, endpoint_id):
-    
 
+def parallel_invoke(dataset, ablationSize, project_id, endpoint_id):
     filenames = []
     labels = []
     with open(f"data/{dataset}/{dataset}_test_vertex.csv") as csvfile:
@@ -177,13 +176,12 @@ def parallel_invoke(dataset, ablationSize, project_id, endpoint_id):
                 break
 
     def _parallel_invoke(filename: str, label: str, project_id: str, endpoint_id: str):
-
         displayNames, confidences, latency = predict_image_classification_sample(
-                        project=project_id,
-                        endpoint_id=endpoint_id,
-                        location="us-central1",
-                        filename=f"data/{dataset}/test/{label}/{filename}",
-                    )
+            project=project_id,
+            endpoint_id=endpoint_id,
+            location="us-central1",
+            filename=f"data/{dataset}/test/{label}/{filename}",
+        )
 
     start = time.time()
     Parallel(n_jobs=10, prefer="threads")(
@@ -192,10 +190,6 @@ def parallel_invoke(dataset, ablationSize, project_id, endpoint_id):
     )
     end = time.time()
     print(f"Time to 1000 invokes {dataset}-{ablationSize}: {end - start}")
-                    # measure the latency for this request
-
-                    
-                    
 
 
 if __name__ == "__main__":
