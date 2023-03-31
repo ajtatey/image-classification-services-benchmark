@@ -7,6 +7,9 @@ import logging
 import time
 import pandas as pd
 from PIL import Image
+from joblib import Parallel, delayed
+from tqdm import tqdm
+
 
 from botocore.exceptions import ClientError
 
@@ -119,7 +122,6 @@ def invoke(dataset, ablationSize, model):
         results[4] = df[4].tolist()
 
     rek_client = create_client("rekognition")
-    # model = 'arn:aws:rekognition:us-east-1:268159102458:project/xrays-5/version/xrays-5.2023-01-30T08.32.32/1675085552467'
 
     with open(f"data/{dataset}/{dataset}_test_aws.csv") as csvfile:
         reader = csv.reader(csvfile)
@@ -156,6 +158,39 @@ def invoke(dataset, ablationSize, model):
                 )
 
 
+def parallel_invoke(dataset, ablationSize, model):
+    
+
+    rek_client = create_client("rekognition")
+
+    filenames = []
+    labels = []
+    with open(f"data/{dataset}/{dataset}_test_aws.csv") as csvfile:
+        reader = csv.reader(csvfile)
+        # get the class labels from classes.txt
+        count = 0
+        for row in reader:
+            filenames.append(row[0].split("/")[-1])
+            labels.append(row[1])
+            count += 1
+            if count == 1000:
+                break
+
+
+    def _parallel_invoke(filename: str, label: str):
+
+        custom_labels, latency = analyze_local_image(
+                    rek_client, model, f"data/{dataset}/test/{label}/{filename}", 1
+                )
+
+    start = time.time()
+    Parallel(n_jobs=10, prefer="threads")(
+        delayed(_parallel_invoke)(filename, label)
+        for filename, label in tqdm(zip(filenames, labels), total=len(labels))
+    )
+    end = time.time()
+    print(f"Time to 1000 invokes {dataset}-{ablationSize}: {end - start}")
+
 if __name__ == "__main__":
     if sys.argv[1] == "upload":
         dataset = sys.argv[2]
@@ -174,3 +209,8 @@ if __name__ == "__main__":
         ablation = sys.argv[3]
         model = sys.argv[4]
         invoke(dataset, ablation, model)
+    elif sys.argv[1] == "parallel":
+        dataset = sys.argv[2]
+        ablation = sys.argv[3]
+        model = sys.argv[4]
+        parallel_invoke(dataset, ablation, model)
