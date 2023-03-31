@@ -1,11 +1,12 @@
+# README
+
 # ml-benchmarking
 
 - Clone this repository.
-- Create a python virtual environment. For example say:
+- Create a python virtual environment. For example, say:
 
 ```bash
-python3 -m venv env
-source env/bin/activate
+python3 -m venv envsource env/bin/activate
 ```
 
 - Install requirements like so `pip install -r requirements.txt`
@@ -16,7 +17,7 @@ Run `python build_all_data.py` to run all steps below.
 
 ### Fetch Datasets
 
-Fetch Kaggle credential by downloading kaggle.json into ~/.kaggle/kaggle.json. See <https://github.com/Kaggle/kaggle-api>
+Fetch Kaggle credential by downloading kaggle.json into ~/.kaggle/kaggle.json. See [https://github.com/Kaggle/kaggle-api](https://github.com/Kaggle/kaggle-api)
 
 Run `fetch_datasets.py`
 
@@ -55,11 +56,10 @@ Run `create_ablations.py`
 python3 create_ablations.py <dataset>
 ```
 
-This generates 55 `.csv` files in `data/<dataset>/ablations`:
+This generates 45 `.csv` files in `data/<dataset>/ablations`:
 
 - 5 training and 5 validation files (one for each ablation) formatted `filename, class`, named `<dataset>_train_{ablation}.csv` and `<dataset>_val_{ablation}.csv`
 - 5 training and 5 validation files (one for each ablation) formatted `{google_bucket_name}/{training_uploads|val_uploads}/filename, class` for use with Vertex AI, named `<dataset>_train_vertex_{ablation}.csv` and `<dataset>_val_vertex_{ablation}.csv`
-  5 training and 5 validation files (one for each ablation) formatted `{azure_datastore_name}/filename, class` for use with Azure ML, named `<dataset>_train_azure_{ablation}.csv` and `<dataset>_val_azure_{ablation}.csv`
 - 5 training and 5 validation files (one for each ablation) formatted `filename, class` for use with Huggingface, named `<dataset>_train_hg_{ablation}.csv` and `<dataset>_val_hg_{ablation}.csv`
 - 5 training files (one for each ablation) formatted `filename, class` for use with nyckel, named `<dataset>_train_nyckel_{ablation}.csv`.
 - 5 training files and 5 validation files (one for each ablation) formatted `filename, class` for use with AWS Rekognition, named `<dataset>_train_aws_{ablation}.csv` and `<dataset>_val_aws_{ablation}.csv`.
@@ -78,7 +78,7 @@ Run `create_tests.py`
 python3 create_tests.py <dataset>
 ```
 
-This will create 5 testing files, one for each of the ML services.
+This will create 4 testing files, one for each of the ML services.
 
 ## Create data folders
 
@@ -88,9 +88,9 @@ Run `create_folders.py`
 python3 create_folders.py
 ```
 
-This will create 10 folders containing training and validation data for each of the ablations. These can be used with huggingface.
+This will create 10 folders containing training and validation data for each of the ablations. These provide an easy upload option when adding data to Hugging Face AutoTrain.
 
-## Nyckel
+## Nyckel Image Classification
 
 Create environment variables for your `client_id` and `client_secret` like so:
 
@@ -124,7 +124,15 @@ This will invoke the model endpoint against each image listed in `<dataset>_test
 actual_class, predicted_class, confidence, invoke_time
 ```
 
-## Huggingface
+You can also run:
+
+```python
+ python nyckel.py parallel <dataset> <your_function_id> <ablation_size>
+```
+
+which will call the endpoint 1,000 times in batches of 10 images at once to check the concurrent throughput for the endpoint.
+
+## Hugging Face AutoTrain
 
 Create a ‘new project’ at [https://ui.autotrain.huggingface.co/projects](https://ui.autotrain.huggingface.co/projects). Give the project a name and select Task: Vision and Model choice: Automatic and ‘create project.’
 
@@ -137,7 +145,9 @@ Choose Use a .CSV or .JSONL file (Method 2) and then:
 
 Do the same for the corresponding `data/<dataset>/ablations/val_hg_{ablation}.csv` and `data/<dataset>/val_uploads_{ablation}`.
 
-When uploaded, choose 'go to trainings,' select number of model candidates, and then 'start models training.' Once hte models have trained, choose the most accurate one and 'view on model hub' and copy the model name to use as you `inference_endpoint`.
+When uploaded, choose ‘go to trainings,’ select number of model candidates, and then ‘start models training.’ Once the models have trained, choose the most accurate one and ‘view on model hub.’ Choose the ‘Deploy’ menu and ‘Inference Endpoints.’
+
+Choose the best Cloud provider, Instance type and security level for you (here we used AWS-East, a small GPU, and a public endpoint). Click ‘Create Endpoint.’ Once the endpoint is running, copy the URL to use as your `inference_endpoint`.
 
 Run:
 
@@ -150,6 +160,14 @@ This will invoke the model endpoint against each image listed in `<dataset>_test
 ```json
 actual_class, predicted_class, confidence, invoke_time
 ```
+
+You can also run:
+
+```python
+ python nyckel.py parallel <dataset> <your_function_id> <ablation_size>
+```
+
+which will call the endpoint 1,000 times in batches of 10 images at once to check the concurrent throughput for the endpoint.
 
 ## Google Vertex AI
 
@@ -170,49 +188,29 @@ Once they have uploaded, go to [https://console.cloud.google.com/vertex-ai/datas
 
 Once the dataset has imported, choose ‘Train new model.’ Choose Advanced Options and then a ‘Manual’ data split.
 
-Once the model has trained, the accuracy will be available in the UI.
+Once the model has trained (should should receive an email), go to ‘Model Registry’ and choose your model, then the version of your model. Choose ‘Deploy & Test’ from the menu and ‘Deploy to endpoint.’ Choose a name for your endpoint, click ‘Continue,’ the choose the number of nodes to use (here we choose 1), and click ‘Deploy.’ Once the endpoint has deployed copy the `<endpoint_id>`. You will also need your `<project_id>`, which can be found in the URL (https://console.cloud.google.com/vertex-ai/endpoints?project=<project_id>)
 
-## Microsoft Azure
-
-After you sign up for Azure Machine Learning, create a workspace. Take note of the workspace and resource group name.
-
-You'll initially have to create credentials for accessing Azure using the SDK. To do so run the Azure CLI with:
+To invoke the model endpoint against each image listed in `<dataset>_test_vertex.csv` run:
 
 ```bash
-az login
+python vertex.py invoke <dataset> <ablation_size> <project_id> <endpoint_id>
 ```
 
-This will return an object containing your tenant and subscription ids. Firstly run:
+This will give you a running accuracy score, as well as outputting `<dataset>-vertex-results-{ablation_size}.csv` which has the format:
 
-```
-az ad sp create-for-rbac --sdk-auth --name ml-auth --role Contributor --scopes /subscriptions/<SUBSCRIPTION_ID>
-```
-
-with your SUBSCRIPTION_ID to create a contributor role. This will give you a client id and client secret you'll need to use the SDK. Add these to your environmental variables:
-
-```
-export AZURE_CLIENT_ID=<CLIENT_ID>
-export AZURE_TENANT_ID=<TENANT_ID>
-export AZURE_CLIENT_SECRET=<CLIENT_SECRET>
-export AZURE_SUBSCRIPTION_ID=<SUBSCRIPTION_ID>
+```bash
+actual_class, predicted_class, confidence, invoke_time
 ```
 
-Within `azure_ml.py` add your resource_group, and workspace_name.
-Then you can run:
+You can also run:
 
+```python
+ python vertex.py parallel <dataset> <ablation_size> <project_id> <endpoint_id>
 ```
-python3 azure_ml.py upload <dataset>
-```
 
-This will upload the training, validation, and testing data to separate data blobs. (note: do this before running `create_ablations.py` as you'll need the `azure_training|val|test_uploads` URIs for the image urls).
+which will call the endpoint 1,000 times in batches of 10 images at once to check the concurrent throughput for the endpoint.
 
-Once uploaded, go to [https://ml.azure.com/](https://ml.azure.com/) and choose your workspace. Choose 'Automated ML,' then 'New Automated ML job.' On the next page select 'Create' to add a new data asset, give it a name, select 'Next' and then 'From local files.' Choose a datastore then choose Upload on the next page. Choose you initial ablation training file (e.g. `data/<dataset>/ablations/train_azure_5.csv`). Click through the pages and 'Create.' Then do the same for the validation and testing files.
-
-Once you have created your data assets, select the training dataset and click 'Next.' On the next page, choose 'label' as the target and either an existing compute cluster or create a new compute cluster. Select 'Classification' on the next page. On the next page choose 'User validation data' as the validation type and choose the validation file. Choose 'Provide a test data asset' as the Test data asset and choose the test file.
-
-Click finish and the job will be created and start. You can find the acuuracy of the model on the Metrics page for the completed model.
-
-## AWS Rekognition
+## AWS Rekognition Custom Labels
 
 To setup AWS Rekognition, you need:
 
@@ -233,19 +231,39 @@ Then run:
 python3 aws_rekognition.py upload <dataset> <ablation>
 ```
 
-This will upload the images for `<ablation>` to `train` and `test` folders in the S3 bucket. The images within these folders will be organized into `class` folders.
+This will upload the images for `<ablation>` to `train` and `val` folders in the S3 bucket in the format s3://`<bucket_name>`/train/ and s3://`<bucket_name>`/val. The images within these folders will be organized into `class` folders.
 
-Once uploaded, go to [Amazon Rekognition Custom Labels](https://us-east-2.console.aws.amazon.com/rekognition/custom-labels#/) and click Get Started. Choose 'Projects' in the left menu and then 'Create Project'. Name your project then choose 'Create Dataset.' On the next page:
+Once uploaded, go to [Amazon Rekognition Custom Labels](https://us-east-2.console.aws.amazon.com/rekognition/custom-labels#/) and click Get Started. Choose ‘Projects’ in the left menu and then ‘Create Project’. Name your project then choose ‘Create Dataset.’ On the next page:
 
-- Choose 'Start with a training dataset and a test dataset'
-- Choose 'Import images from S3 bucket' in Training dataset details and add your train folder S3 URI
-- Choose 'Automatically assign image-level labels to images based on the folder name'
-- Choose 'Import images from S3 bucket' in Test dataset details and add your test folder S3 URI
-- Choose 'Automatically assign image-level labels to images based on the folder name'
+- Choose ‘Start with a training dataset and a test dataset’
+- Choose ‘Import images from S3 bucket’ in Training dataset details and add your train folder S3 URI
+- Choose ‘Automatically assign image-level labels to images based on the folder name’
+- Choose ‘Import images from S3 bucket’ in Test dataset details and add your validation folder S3 URI
+- Choose ‘Automatically assign image-level labels to images based on the folder name’
 
-Once the data is imported, select 'Train Model,' then 'Train Model' again on the next page.
+You will also have to copy the permissions policy over to your bucket.
 
-Once the model has completed training, choose 'Check Metrics' to find the performance of the model.
+Once the data is imported, select ‘Train Model,’ then ‘Train Model’ again on the next page.
+
+Once the model has completed training, choose ‘User Model’ and then ‘Start’ to deploy to an endpoint. Once deployed, copy the ARN and invoke the model endpoint against each image listed in `<dataset>_test_aws.csv` by running:
+
+```python
+ python aws_rekognition.py invoke <dataset> <ablation_size> <endpoint>
+```
+
+This will give you a running accuracy score, as well as outputting `<dataset>-aws-results-{ablation_size}.csv` which has the format:
+
+```bash
+actual_class, predicted_class, confidence, invoke_time
+```
+
+You can also run:
+
+```python
+ python aws_rekognition.py parallel <dataset> <ablation_size> <endpoint>
+```
+
+which will call the endpoint 1,000 times in batches of 10 images at once to check the concurrent throughput for the endpoint.
 
 ## Get Results
 
@@ -255,7 +273,9 @@ To show the accuracies and latencies of each service/ablation/dataset combinatio
 get_results.py
 ```
 
-This will print out the accuracy and latency for each permuation. It will also produce two plots:
+This will print out the accuracy and latency for each permutation. It will also produce two plots:
 
 1. a log scale plot of mean accuracy (and SEM) averaged across datasets per ablation for each service.
-2. a boxplot of latencies per service, showing “minimum”, first quartile [Q1], median, third quartile [Q3] and “maximum”, excluding outliers.
+2. a double plot, with the first subplot being a boxplot of latencies per service, showing “minimum”, first quartile [Q1], median, third quartile [Q3] and “maximum”, excluding outliers and the second subplot showing a bar graph of concurrent latencies (pulled from `image-classification-throughputs.csv`, where you should store the outputs of the `parallel` invokes).
+
+You can also run render_results.py, which pulls data from image-classification-data.csv, which is manually-crafted csv that combines data of all accuracies, latencies, and training times for all datasets and ablations and produces the images in the report.
