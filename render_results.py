@@ -340,7 +340,7 @@ def render_traintime_by_dataset_as_barplot(data):
     plt.savefig("result_plots/traintime_by_dataset_as_barplot.svg")
 
 
-def render_mean_traintime_vs_mean_accuracy(data, include_legend=True):
+def render_mean_traintime_vs_mean_accuracy(data, include_legend=True, output_file_name="mean_traintime_vs_mean_accuracy"):
     def mean_acc_by_service(service: str):
         accs = []
         for dataset in data[service]:
@@ -384,14 +384,14 @@ def render_mean_traintime_vs_mean_accuracy(data, include_legend=True):
     ax.set_title("Accuracy vs. Traintime", fontsize=18, fontweight="bold")
     ax.set_xscale("log")
     if(include_legend):
-        ax.legend(facecolor="white")
+        ax.legend(facecolor="#B0EEFF")
     ax.set_xlabel("Training time (s)")
     _ = ax.set_ylabel("Accuracy (%)")
     ax.grid(which="minor", color="dimgrey", alpha=0.1)
     ax.grid(which="major", color="dimgrey", alpha=0.3)
     fig.tight_layout()
-    fig.savefig(f"result_plots/mean_traintime_vs_mean_accuracy.png")
-    fig.savefig(f"result_plots/mean_traintime_vs_mean_accuracy.svg")
+    fig.savefig(f"result_plots/{output_file_name}.png")
+    fig.savefig(f"result_plots/{output_file_name}.svg")
 
 
 def render_selected(data):
@@ -399,7 +399,8 @@ def render_selected(data):
     render_mean_accuracy_by_ablation_as_barplot(data)
     render_accuracy_by_dataset_as_barplot(data)
     render_traintime_by_dataset_as_barplot(data)
-    render_mean_traintime_vs_mean_accuracy(data, False)
+    render_mean_traintime_vs_mean_accuracy(data, True)
+    render_mean_traintime_vs_mean_accuracy(data, False, "mean_traintime_vs_mean_accuracy_no_legend")
 
 
 def main(data_file_path: str = "image-classification-benchmark-data.csv"):
