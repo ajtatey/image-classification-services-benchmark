@@ -16,36 +16,44 @@ CB91_Purple = "#9D2EC5"
 CB91_Violet = "#661D98"
 CB91_Amber = "#F5B14C"
 
-# These colors are picked from the previous benchmark post
+# These two colors are picked from the previous benchmark post
 # https://www.nyckel.com/blog/automl-benchmark-nyckel-google-huggingface/
-nyckel_blue = "#4c72b0"
-google_orange = "#dd8452"
-huggingface_green = "#55a868"
+google_orange = "#dd8452" 
+huggingface_green = "#55a868" 
+
+nyckel_blue = "#1F73C3" # From the nyckel favicon
+huggingface_yellow = "#FECA19" # Yellow from inside of huggingface logo
+amazon_orange = "#FD8608" # Orange from arrow in amazon logo
+google_green = "#2DA541" # Green from the google logo
+face_color = "#B0EEFF", #from clouds in bounding box box post hero
+#face_color = "#AADEFC", #from bounding box post graph
+#face_color = "#BDD4FE", #from semantic search post (light part of lens)
 
 
 def configure_matplotlib():
     plt.rcParams.update({"font.size": 14})
 
     sns.set(
-        font="Franklin Gothic Book",
+        font="Fuzzy Bubbles",
+        font_scale=1,
         rc={
             "axes.axisbelow": False,
-            "axes.edgecolor": "lightgrey",
+            "axes.edgecolor": "k",
             "axes.facecolor": "None",
             "axes.grid": False,
-            "axes.labelcolor": "dimgrey",
+            "axes.labelcolor": "k",
             "axes.spines.right": False,
             "axes.spines.top": False,
-            "figure.facecolor": "white",
+            "figure.facecolor": "#B0EEFF", #Using face_color here doesn't work for some reason
             "lines.solid_capstyle": "round",
             "patch.edgecolor": "w",
             "patch.force_edgecolor": True,
-            "text.color": "dimgrey",
+            "text.color": "k",
             "xtick.bottom": True,
-            "xtick.color": "dimgrey",
+            "xtick.color": "k",
             "xtick.direction": "out",
             "xtick.top": False,
-            "ytick.color": "dimgrey",
+            "ytick.color": "k",
             "ytick.direction": "out",
             "ytick.left": True,
             "ytick.right": False,
@@ -55,9 +63,9 @@ def configure_matplotlib():
 
 color_by_service = {
     "nyckel": nyckel_blue,
-    "vertex": google_orange,
-    "huggingface": huggingface_green,
-    "aws": CB91_Pink,
+    "vertex": google_green,
+    "huggingface": huggingface_yellow,
+    "aws": amazon_orange,
 }
 
 services_in_order = ["nyckel", "vertex", "huggingface", "aws"]
@@ -332,7 +340,7 @@ def render_traintime_by_dataset_as_barplot(data):
     plt.savefig("result_plots/traintime_by_dataset_as_barplot.svg")
 
 
-def render_mean_traintime_vs_mean_accuracy(data):
+def render_mean_traintime_vs_mean_accuracy(data, include_legend=True):
     def mean_acc_by_service(service: str):
         accs = []
         for dataset in data[service]:
@@ -373,9 +381,10 @@ def render_mean_traintime_vs_mean_accuracy(data):
         print(service, mean_traintime_by_service(service))
         print(service, mean_acc_by_service(service))
 
-    ax.set_title("Accuracy vs. Traintime")
+    ax.set_title("Accuracy vs. Traintime", fontsize=18, fontweight="bold")
     ax.set_xscale("log")
-    ax.legend(facecolor="white")
+    if(include_legend):
+        ax.legend(facecolor="white")
     ax.set_xlabel("Training time (s)")
     _ = ax.set_ylabel("Accuracy (%)")
     ax.grid(which="minor", color="dimgrey", alpha=0.1)
@@ -390,7 +399,7 @@ def render_selected(data):
     render_mean_accuracy_by_ablation_as_barplot(data)
     render_accuracy_by_dataset_as_barplot(data)
     render_traintime_by_dataset_as_barplot(data)
-    render_mean_traintime_vs_mean_accuracy(data)
+    render_mean_traintime_vs_mean_accuracy(data, False)
 
 
 def main(data_file_path: str = "image-classification-benchmark-data.csv"):
