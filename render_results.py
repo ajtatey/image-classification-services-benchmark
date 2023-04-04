@@ -377,6 +377,7 @@ def render_mean_traintime_vs_mean_accuracy(data, include_legend=True, output_fil
             label=pretty_name_by_service[service],
             markersize=12,
             color=color_by_service[service],
+            elinewidth=2.5,
         )
         print(service, mean_traintime_by_service(service))
         print(service, mean_acc_by_service(service))
