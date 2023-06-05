@@ -1,5 +1,5 @@
-service,usability
-nyckel,24 
-huggingface,18
-aws,16
-vertex,12
+service,data,expertise,training,invoke,docs
+nyckel,5,5,5,5,4 
+huggingface,4,4,4,3,2
+aws,3,4,3,4,2
+vertex,2,2,2,2,4

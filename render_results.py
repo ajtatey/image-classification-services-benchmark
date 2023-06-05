@@ -37,7 +37,7 @@ def configure_matplotlib():
         font="Fuzzy Bubbles",
         font_scale=1,
         rc={
-            "axes.axisbelow": False,
+            "axes.axisbelow": True,
             "axes.edgecolor": "k",
             "axes.facecolor": "None",
             "axes.grid": False,
@@ -188,6 +188,78 @@ def render_runtime_vs_ablation_as_lines(data):
     fig.savefig("result_plots/runtime_vs_ablation_as_lines.png")
     fig.savefig("result_plots/runtime_vs_ablation_as_lines.svg")
 
+def render_accuracy_by_ablation_and_dataset_as_barplot(data):
+    # For each dataset, plot accuracy by ablation size and service on a barplot
+    # Tile all these barplots in two columns in a figure
+    fig, axs = plt.subplots(4, 2, figsize=(10, 10))
+    fig.suptitle("Accuracy by ablation size for each dataset", fontsize=18)
+    subplots = []
+    subplots.append(plt.subplot2grid((4, 4), (0, 0), colspan=2))
+    subplots.append(plt.subplot2grid((4, 4), (0, 2), colspan=2))
+    subplots.append(plt.subplot2grid((4, 4), (1, 0), colspan=2))
+    subplots.append(plt.subplot2grid((4, 4), (1, 2), colspan=2))
+    subplots.append(plt.subplot2grid((4, 4), (2, 0), colspan=2))
+    subplots.append(plt.subplot2grid((4, 4), (2, 2), colspan=2))
+    subplots.append(plt.subplot2grid((4, 4), (3, 1), colspan=2))
+
+    for idx, dataset in enumerate(datasets):
+        bars = render_accuracy_by_ablation_for_dataset_as_barplot(data, dataset, subplots[idx])
+
+    legendAx = plt.subplot2grid((4,4), (3,3), colspan=1)
+    legendAx.axis("off")
+    service_names = []
+    for service in services:
+        service_names.append(pretty_name_by_service[service])
+    legendAx.legend(bars, service_names, loc="center")
+
+    plt.tight_layout()
+    plt.savefig(f"result_plots/accuracy_by_ablation_all_as_barplot.png")
+    plt.savefig(f"result_plots/accuracy_by_ablation_all_as_barplot.svg")
+ 
+
+def render_accuracy_by_ablation_for_dataset_as_barplot(data, dataset, plot):
+    def acc_by_dataset_and_service(service: str, dataset: str, ablation: int):
+        for this_ablation, this_accuracy in zip(data[service][dataset]["ablation"], data[service][dataset]["accuracy"]):
+            if ablation == this_ablation:
+                return this_accuracy
+        return 0
+
+    ablations = [5, 20, 80, 320, 1280]
+    barplot_data = {}
+    for service in services:
+        barplot_data[service] = {
+            "acc": [acc_by_dataset_and_service(service, dataset, abl) for abl in ablations],
+        }
+
+    N = len(ablations)
+
+    # Position of bars on x-axis
+    ind = np.arange(N)
+
+    # Figure size
+    #plt.figure(figsize=(10, 5))
+
+    # Width of a bar
+    width = 0.2
+
+    # Plotting
+    offsets = [-1.5 * width, -0.5 * width, 0.5 * width, 1.5 * width]
+    bars = []
+    for service, offset in zip(services, offsets):
+        bars.append(plot.bar(
+            ind + offset,
+            barplot_data[service]["acc"],
+            width,
+            label=pretty_name_by_service[service],
+            color=color_by_service[service],
+            alpha=1,
+        ))
+
+    plot.set_title(dataset, fontsize=12)
+    plot.set_ylim([0, 100])
+    plot.set_xticks(ind, ablations)
+    return bars
+
 
 def render_mean_accuracy_by_ablation_as_barplot(data):
     def mean_acc_by_service(service: str, ablation: int):
@@ -239,6 +311,7 @@ def render_mean_accuracy_by_ablation_as_barplot(data):
             label=pretty_name_by_service[service],
             yerr=barplot_data[service]["std"],
             color=color_by_service[service],
+            alpha=1,
         )
 
     plt.title("Accuracy by ablation size", fontsize=18)
@@ -281,6 +354,7 @@ def render_accuracy_by_dataset_as_barplot(data):
             width,
             label=pretty_name_by_service[service],
             color=color_by_service[service],
+            alpha=1,
         )
 
     plt.title("Accuracy by dataset & service", fontsize=18)
@@ -323,6 +397,7 @@ def render_traintime_by_dataset_as_barplot(data):
             width,
             label=pretty_name_by_service[service],
             color=color_by_service[service],
+            alpha=1,
         )
 
     plt.title("Traintime by dataset & service", fontsize=18)
@@ -394,14 +469,121 @@ def render_mean_traintime_vs_mean_accuracy(data, include_legend=True, output_fil
     fig.savefig(f"result_plots/{output_file_name}.png")
     fig.savefig(f"result_plots/{output_file_name}.svg")
 
+def render_latency_and_throughput():
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+    render_throughput(ax[1])
+    render_latency(ax[0])
+
+    fig.tight_layout()
+    fig.savefig("result_plots/throughput_latency.png")
+    fig.savefig("result_plots/throughput_latency.svg")
+
+def render_latency(plot):
+    with open ("latency.csv") as f:
+        lines = f.readlines()
+
+    service_colors=[]
+    boxes=[]
+    for line in lines[1:]:
+        service, min, p25, p50, p75, max = line.split(",")
+        boxes.append({
+            'label' : pretty_name_by_service[service],
+            'whislo': int(min),    # Bottom whisker position
+            'q1'    : int(p25),    # First quartile (25th percentile)
+            'med'   : int(p50),    # Median         (50th percentile)
+            'q3'    : int(p75),    # Third quartile (75th percentile)
+            'whishi': int(max),    # Top whisker position
+            'fliers': []        # Outliers
+        })
+        service_colors.append(color_by_service[service])
+
+    bplot = plot.bxp(boxes, showfliers=False, patch_artist=True)
+    for patch, color in zip(bplot['boxes'], service_colors):
+        patch.set_facecolor(color)
+    plot.set_ylabel("Latency (ms)")
+    plot.set_title("Inference latency", fontsize=12)
+    plot.grid(which="major", color="dimgrey", alpha=0.3)
+
+def render_throughput(plot):
+    # Throughput values (in rps) are in the data file throughput.csv
+    # The header row describes the columns
+    # The columns are service,througput(rps)
+    # Read in the file and plot the values as a bar graph
+    with open("image-classification-throughputs.csv") as f:
+        lines = f.readlines()
+
+    N = len(lines) - 1
+
+    # Position of bars on x-axis
+    ind = np.arange(N)
+
+    # Width of a bar
+    width = 0.2
+
+    service_names=[]
+    for line in lines[1:]:
+        service, time_for_1000_requests = line.split(",")
+        throughput = 1000 / float(time_for_1000_requests)
+        service_names.append(pretty_name_by_service[service])
+        plot.bar(
+            service,
+            float(throughput),
+            width,
+            label=pretty_name_by_service[service],
+            color=color_by_service[service],
+            alpha=1,
+        )
+
+    plot.set_title("Inference throughput at 10 concurrent requests", fontsize=12)
+    plot.set_ylabel("Requests per second")
+    plot.grid(which="major", color="dimgrey", alpha=0.3)
+    plot.set_xticks(ind, service_names)
+
+def render_devex():
+    with open("image-classification-usability.csv") as f:
+        lines = f.readlines()
+
+    N = len(lines) - 1
+
+    # Position of bars on x-axis
+    ind = np.arange(N)
+
+    # Width of a bar
+    width = 0.2
+
+    plt.figure(figsize=(10, 5))
+
+    service_names=[]
+    for line in lines[1:]:
+        service, data, expertise, training, invoke, docs = line.split(",")
+        total = int(data)+int(expertise)+int(training)+int(invoke)+int(docs)
+        service_names.append(pretty_name_by_service[service])
+        plt.bar(
+            service,
+            total,
+            width,
+            label=pretty_name_by_service[service],
+            color=color_by_service[service],
+            alpha=1,
+        )
+
+    plt.title("Developer experience scores by service (higher is better)", fontsize=18)
+    plt.ylabel("Total score")
+    plt.grid(which="major", color="dimgrey", alpha=0.3)
+    plt.xticks(ind, service_names)
+    plt.savefig("result_plots/devex.png")
+    plt.savefig("result_plots/devex.svg")
 
 def render_selected(data):
     render_runtime_vs_ablation_as_lines(data)
     render_mean_accuracy_by_ablation_as_barplot(data)
+    render_accuracy_by_ablation_and_dataset_as_barplot(data)
     render_accuracy_by_dataset_as_barplot(data)
     render_traintime_by_dataset_as_barplot(data)
     render_mean_traintime_vs_mean_accuracy(data, True)
     render_mean_traintime_vs_mean_accuracy(data, False, "mean_traintime_vs_mean_accuracy_no_legend")
+    render_latency_and_throughput()
+    render_devex()
 
 
 def main(data_file_path: str = "image-classification-benchmark-data.csv"):

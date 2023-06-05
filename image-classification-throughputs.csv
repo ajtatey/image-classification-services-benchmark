@@ -1,4 +1,4 @@
-service,throughput
+service,time_for_1000_requests
 nyckel,65.4 
 huggingface,35.9
 aws,45.2 
